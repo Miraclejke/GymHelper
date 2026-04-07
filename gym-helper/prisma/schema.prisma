@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Weekday {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          UserRole       @default(USER)
+  planDays      PlanDay[]
+  workoutDays   WorkoutDay[]
+  nutritionDays NutritionDay[]
+  restDays      RestDay[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model PlanDay {
+  id        String         @id @default(cuid())
+  userId    String
+  weekday   Weekday
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises PlanExercise[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([userId, weekday])
+}
+
+model PlanExercise {
+  id        String    @id @default(cuid())
+  planDayId String
+  sortOrder Int
+  name      String
+  note      String    @default("")
+  planDay   PlanDay   @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([planDayId, sortOrder])
+}
+
+model WorkoutDay {
+  id        String            @id @default(cuid())
+  userId    String
+  date      DateTime          @db.Date
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises WorkoutExercise[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([userId, date])
+}
+
+model WorkoutExercise {
+  id           String       @id @default(cuid())
+  workoutDayId String
+  sortOrder    Int
+  name         String
+  workoutDay   WorkoutDay   @relation(fields: [workoutDayId], references: [id], onDelete: Cascade)
+  sets         WorkoutSet[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([workoutDayId, sortOrder])
+}
+
+model WorkoutSet {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  sortOrder         Int
+  weight            Float?
+  reps              Int?
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([workoutExerciseId, sortOrder])
+}
+
+model NutritionDay {
+  id        String      @id @default(cuid())
+  userId    String
+  date      DateTime    @db.Date
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals     MealEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, date])
+}
+
+model MealEntry {
+  id             String       @id @default(cuid())
+  nutritionDayId String
+  sortOrder      Int
+  title          String
+  calories       Int?
+  protein        Float?
+  fat            Float?
+  carbs          Float?
+  nutritionDay   NutritionDay @relation(fields: [nutritionDayId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([nutritionDayId, sortOrder])
+}
+
+model RestDay {
+  id         String   @id @default(cuid())
+  userId     String
+  date       DateTime @db.Date
+  isRest     Boolean  @default(false)
+  sleepHours Float?
+  note       String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, date])
+}

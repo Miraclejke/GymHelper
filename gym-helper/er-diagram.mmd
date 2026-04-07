@@ -1,0 +1,78 @@
+erDiagram
+    User ||--o{ PlanDay : has
+    PlanDay ||--o{ PlanExercise : contains
+    User ||--o{ WorkoutDay : has
+    WorkoutDay ||--o{ WorkoutExercise : contains
+    WorkoutExercise ||--o{ WorkoutSet : contains
+    User ||--o{ NutritionDay : has
+    NutritionDay ||--o{ MealEntry : contains
+    User ||--o{ RestDay : has
+
+    User {
+        string id PK
+        string name
+        string email UK
+        string passwordHash
+        string role
+    }
+
+    PlanDay {
+        string id PK
+        string userId FK
+        string weekday
+    }
+
+    PlanExercise {
+        string id PK
+        string planDayId FK
+        int sortOrder
+        string name
+        string note
+    }
+
+    WorkoutDay {
+        string id PK
+        string userId FK
+        date date
+    }
+
+    WorkoutExercise {
+        string id PK
+        string workoutDayId FK
+        int sortOrder
+        string name
+    }
+
+    WorkoutSet {
+        string id PK
+        string workoutExerciseId FK
+        int sortOrder
+        float weight
+        int reps
+    }
+
+    NutritionDay {
+        string id PK
+        string userId FK
+        date date
+    }
+
+    MealEntry {
+        string id PK
+        string nutritionDayId FK
+        int sortOrder
+        string title
+        int calories
+        float protein
+        float fat
+        float carbs
+    }
+
+    RestDay {
+        string id PK
+        string userId FK
+        date date
+        boolean isRest
+        float sleepHours
+        string note
+    }
