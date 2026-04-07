@@ -1,0 +1,19 @@
+<section class="hero-card">
+  <p class="eyebrow">{{subtitle}}</p>
+  <h2 class="hero-title">{{title}}</h2>
+  <p class="hero-text">{{intro}}</p>
+</section>
+
+<section class="section-card">
+  <h2 class="section-title">Что уже встроено в это приложение</h2>
+  <p class="section-text">
+    Главная страница сайта и приватные экраны GymHelper отдаются как React SPA,
+    а эта страница рендерится на сервере с помощью шаблонизатора Handlebars.
+  </p>
+
+  <div class="card-grid">
+    {{#each cards}}
+      {{> feature-card}}
+    {{/each}}
+  </div>
+</section>

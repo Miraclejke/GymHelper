@@ -1,0 +1,19 @@
+<section class="hero-card">
+  <p class="eyebrow">{{subtitle}}</p>
+  <h2 class="hero-title">{{title}}</h2>
+  <p class="hero-text">{{intro}}</p>
+</section>
+
+<section class="section-card">
+  <h2 class="section-title">Повторяющиеся карточки как отдельный partial</h2>
+  <p class="section-text">
+    На этой странице повторяющийся блок карточки упражнения вынесен в partial,
+    а информация о текущей сессии переключается query-параметром <code>auth</code>.
+  </p>
+
+  <div class="card-grid">
+    {{#each cards}}
+      {{> feature-card}}
+    {{/each}}
+  </div>
+</section>

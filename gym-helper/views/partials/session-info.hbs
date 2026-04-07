@@ -1,0 +1,13 @@
+<section class="session-box" aria-label="Информация о сессии">
+  <p class="session-label">Состояние сессии</p>
+
+  {{#if session.isAuthorized}}
+    <p class="session-main">Вы вошли как {{session.name}}</p>
+    <p class="session-meta">{{session.email}} · роль: {{session.role}}</p>
+  {{else}}
+    <p class="session-main">Пользователь не авторизован</p>
+    <p class="session-meta">Это демонстрационный режим для ЛР1.</p>
+  {{/if}}
+
+  <a class="session-action" href="{{session.actionHref}}">{{session.actionLabel}}</a>
+</section>

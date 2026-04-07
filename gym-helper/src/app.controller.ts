@@ -1,10 +1,25 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Query, Render, Res } from '@nestjs/common';
 import { existsSync } from 'fs';
 import type { Response } from 'express';
 import { join } from 'path';
+import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get('lab1')
+  @Render('lab1-home')
+  renderLabHome(@Query('auth') auth?: string) {
+    return this.appService.getLabHomeViewModel(auth);
+  }
+
+  @Get('lab1/exercises')
+  @Render('lab1-exercises')
+  renderLabExercises(@Query('auth') auth?: string) {
+    return this.appService.getLabExercisesViewModel(auth);
+  }
+
   @Get([
     '',
     'login',
