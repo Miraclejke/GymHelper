@@ -260,5 +260,10 @@
     if (footerYear) {
       footerYear.textContent = String(new Date().getFullYear());
     }
+
+    const clientElapsed = document.querySelector('[data-client-elapsed]');
+    if (clientElapsed && window.performance?.now) {
+      clientElapsed.textContent = `${Math.round(window.performance.now())} ms`;
+    }
   });
 </script>

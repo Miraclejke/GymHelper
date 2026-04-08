@@ -11,6 +11,7 @@ import { GqlSessionAuthGuard } from './guards/gql-session-auth.guard';
 import { DashboardResolver } from './dashboard/dashboard.resolver';
 import { PlanResolver } from './plan/plan.resolver';
 import { ComplexityPlugin } from './plugins/complexity.plugin';
+import { RequestTimingPlugin } from './plugins/request-timing.plugin';
 import {
   WorkoutExerciseFieldResolver,
   WorkoutResolver,
@@ -36,6 +37,7 @@ import type { GraphqlContext } from './graphql-context.type';
   ],
   providers: [
     ComplexityPlugin,
+    RequestTimingPlugin,
     GqlSessionAuthGuard,
     AuthResolver,
     PlanResolver,

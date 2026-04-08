@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  Put,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,
@@ -11,6 +20,7 @@ import {
 import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { ETagInterceptor } from '../common/interceptors/etag.interceptor';
 import { PlanExerciseResponseDto, WeeklyPlanResponseDto } from './dto/plan.response.dto';
 import { SavePlanDayDto } from './dto/save-plan-day.dto';
 import { PlanService } from './plan.service';
@@ -32,6 +42,8 @@ export class PlanController {
   }
 
   @Get('suggestions')
+  @Header('Cache-Control', 'private, max-age=3600')
+  @UseInterceptors(ETagInterceptor)
   @ApiOperation({ summary: 'Get default exercise suggestions.' })
   @ApiOkResponse({
     schema: {

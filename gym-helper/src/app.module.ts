@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { RequestTimingInterceptor } from './common/interceptors/request-timing.interceptor';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AppGraphqlModule } from './graphql/graphql.module';
 import { NutritionModule } from './nutrition/nutrition.module';
@@ -26,6 +28,12 @@ import { WorkoutModule } from './workout/workout.module';
     RestModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestTimingInterceptor,
+    },
+  ],
 })
 export class AppModule {}

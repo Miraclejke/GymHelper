@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import {
   MealEntryResponse,
   NutritionDayResponse,
@@ -6,12 +8,14 @@ import {
 } from '../common/api.types';
 import { fromDateOnly, toDateOnly } from '../common/date.util';
 import { buildPaginatedResponse } from '../common/pagination.util';
+import { getDashboardSummaryCacheKey } from '../dashboard/dashboard.cache';
 import { DashboardEventsService } from '../dashboard/dashboard-events.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class NutritionService {
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly prisma: PrismaService,
     private readonly dashboardEvents: DashboardEventsService,
   ) {}
@@ -114,6 +118,7 @@ export class NutritionService {
           date: dateOnly,
         },
       });
+      await this.cacheManager.del(getDashboardSummaryCacheKey(userId));
 
       this.dashboardEvents.publish(userId, {
         reason: 'nutrition_deleted',
@@ -163,6 +168,7 @@ export class NutritionService {
         },
       },
     });
+    await this.cacheManager.del(getDashboardSummaryCacheKey(userId));
 
     this.dashboardEvents.publish(userId, {
       reason: 'nutrition_saved',

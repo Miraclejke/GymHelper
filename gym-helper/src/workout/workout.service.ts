@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import {
   PaginatedResponse,
   WorkoutDayResponse,
@@ -8,12 +10,14 @@ import {
 import { fromDateOnly, toDateOnly } from '../common/date.util';
 import { buildPaginatedResponse } from '../common/pagination.util';
 import { DEFAULT_EXERCISE_SUGGESTIONS } from '../common/suggestions';
+import { getDashboardSummaryCacheKey } from '../dashboard/dashboard.cache';
 import { DashboardEventsService } from '../dashboard/dashboard-events.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WorkoutService {
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly prisma: PrismaService,
     private readonly dashboardEvents: DashboardEventsService,
   ) {}
@@ -116,6 +120,7 @@ export class WorkoutService {
           date: dateOnly,
         },
       });
+      await this.cacheManager.del(getDashboardSummaryCacheKey(userId));
 
       this.dashboardEvents.publish(userId, {
         reason: 'workout_deleted',
@@ -176,6 +181,7 @@ export class WorkoutService {
         },
       },
     });
+    await this.cacheManager.del(getDashboardSummaryCacheKey(userId));
 
     this.dashboardEvents.publish(userId, {
       reason: 'workout_saved',

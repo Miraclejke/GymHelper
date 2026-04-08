@@ -9,5 +9,13 @@
     <p class="session-meta">Это демонстрационный режим для ЛР1.</p>
   {{/if}}
 
+  {{#if serverElapsedMs}}
+    <p class="session-meta">
+      Server: <strong>{{serverElapsedMs}} ms</strong>
+      |
+      Client: <strong><span data-client-elapsed>...</span></strong>
+    </p>
+  {{/if}}
+
   <a class="session-action" href="{{session.actionHref}}">{{session.actionLabel}}</a>
 </section>

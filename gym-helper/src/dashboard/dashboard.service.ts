@@ -1,14 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import { DashboardSummaryResponse } from '../common/api.types';
 import { PrismaService } from '../prisma/prisma.service';
+import { getDashboardSummaryCacheKey } from './dashboard.cache';
 
 const DAYS_RANGE = 14;
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async getSummary(userId: string): Promise<DashboardSummaryResponse> {
+    const cacheKey = getDashboardSummaryCacheKey(userId);
+    const cached = await this.cacheManager.get<DashboardSummaryResponse>(
+      cacheKey,
+    );
+
+    if (cached) {
+      return cached;
+    }
+
     const startDate = this.getRangeStartDate(DAYS_RANGE);
 
     const [workoutDays, nutritionDays, restDays] = await Promise.all([
@@ -74,11 +89,15 @@ export class DashboardService {
       }
     });
 
-    return {
+    const summary = {
       workoutDays: workoutCount,
       avgCalories: caloriesDays ? Math.round(caloriesSum / caloriesDays) : 0,
       avgSleep: sleepDays ? Math.round((sleepSum / sleepDays) * 10) / 10 : 0,
     };
+
+    await this.cacheManager.set(cacheKey, summary);
+
+    return summary;
   }
 
   private getRangeStartDate(days: number) {

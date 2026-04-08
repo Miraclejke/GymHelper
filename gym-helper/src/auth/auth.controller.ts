@@ -37,7 +37,8 @@ export class AuthController {
   @ApiCookieAuth('session')
   @ApiExtraModels(AuthUserResponseDto)
   @ApiOkResponse({
-    description: 'Returns the current user or null when there is no active session.',
+    description:
+      'Returns the current user or null when there is no active session.',
     schema: {
       nullable: true,
       allOf: [{ $ref: getSchemaPath(AuthUserResponseDto) }],

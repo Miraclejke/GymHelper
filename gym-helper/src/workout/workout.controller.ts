@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Put, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  Put,
+  Query,
+  Res,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,
@@ -13,6 +24,7 @@ import type { Response } from 'express';
 import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { ETagInterceptor } from '../common/interceptors/etag.interceptor';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { setPaginationHeaders } from '../common/pagination.util';
 import { SaveWorkoutDayDto } from './dto/save-workout-day.dto';
@@ -32,6 +44,8 @@ export class WorkoutController {
   constructor(private readonly workoutService: WorkoutService) {}
 
   @Get('suggestions')
+  @Header('Cache-Control', 'private, max-age=3600')
+  @UseInterceptors(ETagInterceptor)
   @ApiOperation({ summary: 'Get default exercise suggestions.' })
   @ApiOkResponse({
     schema: {

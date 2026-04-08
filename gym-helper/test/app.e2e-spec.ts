@@ -46,6 +46,13 @@ describe('GymHelper API (e2e)', () => {
     expect(response.text).toContain('GymHelper');
   });
 
+  it('renders lab1 pages with server and client elapsed time markers', async () => {
+    const response = await agent.get('/lab1').expect(200);
+
+    expect(response.text).toContain('Server:');
+    expect(response.text).toContain('data-client-elapsed');
+  });
+
   it('requires a session for protected API routes', async () => {
     await agent.get('/api/plan/mon').expect(401);
     await agent.get('/api/dashboard/summary').expect(401);
@@ -99,6 +106,28 @@ describe('GymHelper API (e2e)', () => {
     expect(meResponse.body.email).toBe(userEmail);
   });
 
+  it('returns timing and HTTP cache headers for suggestion endpoints', async () => {
+    const firstResponse = await agent.get('/api/plan/suggestions').expect(200);
+
+    expect(firstResponse.headers['cache-control']).toBe(
+      'private, max-age=3600',
+    );
+    expect(firstResponse.headers['etag']).toMatch(/^".+"$/);
+    expect(firstResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
+    expect(Array.isArray(firstResponse.body)).toBe(true);
+    expect(firstResponse.body.length).toBeGreaterThan(0);
+
+    const notModifiedResponse = await agent
+      .get('/api/plan/suggestions')
+      .set('If-None-Match', firstResponse.headers['etag'])
+      .expect(304);
+
+    expect(notModifiedResponse.text).toBe('');
+    expect(notModifiedResponse.headers['etag']).toBe(
+      firstResponse.headers['etag'],
+    );
+  });
+
   it('serves GraphiQL and executes GraphQL operations with the current session', async () => {
     const today = getTodayIso();
 
@@ -129,6 +158,7 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
+    expect(savePlanResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
     expect(savePlanResponse.body.errors).toBeUndefined();
     expect(savePlanResponse.body.data.savePlanDay).toHaveLength(1);
     expect(savePlanResponse.body.data.savePlanDay[0]).toMatchObject({
@@ -224,6 +254,7 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
+    expect(queryResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
     expect(queryResponse.body.errors).toBeUndefined();
     expect(queryResponse.body.data.me.email).toBe(userEmail);
     expect(queryResponse.body.data.weeklyPlan.mon[0]).toMatchObject({
