@@ -40,6 +40,10 @@ function isSecureCookieEnabled() {
 }
 
 export function configureApp(app: NestExpressApplication) {
+  // Render terminates HTTPS on the proxy, so Express must trust it
+  // before secure session cookies can be sent back to the browser.
+  app.set('trust proxy', 1);
+
   app.enableCors({
     origin: getAllowedOrigins(),
     credentials: true,
@@ -57,6 +61,7 @@ export function configureApp(app: NestExpressApplication) {
       name: 'gymhelper.sid',
       // MemoryStore is acceptable here because this is an educational project.
       secret: getSessionSecret(),
+      proxy: isSecureCookieEnabled(),
       resave: false,
       saveUninitialized: false,
       cookie: {

@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi } from '../api/authApi';
+import { AUTH_EXPIRED_EVENT } from '../api/http';
 import type {
   ChangePasswordPayload,
   UpdateProfilePayload,
@@ -42,8 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = async () => {
-    const nextUser = await authApi.getCurrentUser();
-    setUser(nextUser);
+    try {
+      const nextUser = await authApi.getCurrentUser();
+      setUser(nextUser);
+    } catch {
+      setUser(null);
+    }
   };
 
   useEffect(() => {
@@ -54,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const nextUser = await authApi.getCurrentUser();
         if (isMounted) {
           setUser(nextUser);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
         }
       } finally {
         if (isMounted) {
@@ -66,6 +75,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setUser(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
     };
   }, []);
 

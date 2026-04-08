@@ -195,6 +195,46 @@ describe('GymHelper API (e2e)', () => {
     expect(meBody.email).toBe(userEmail);
   });
 
+  it('sets a secure session cookie for proxied production requests', async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    const productionApp =
+      moduleFixture.createNestApplication<NestExpressApplication>();
+    configureApp(productionApp);
+    await productionApp.init();
+
+    try {
+      const response = await request(productionApp.getHttpServer())
+        .post('/api/auth/register')
+        .set('X-Forwarded-Proto', 'https')
+        .send({
+          name: 'Production Cookie User',
+          email: `prod-${randomUUID()}@gymhelper.local`,
+          password: 'prod1234',
+        })
+        .expect(201);
+
+      const setCookieHeader = response.headers['set-cookie'];
+      const setCookie: string[] = Array.isArray(setCookieHeader)
+        ? setCookieHeader.map((header) => String(header))
+        : [];
+
+      expect(Array.isArray(setCookie)).toBe(true);
+      expect(
+        setCookie.some((header) => header.startsWith('gymhelper.sid=')),
+      ).toBe(true);
+      expect(setCookie.some((header) => header.includes('Secure'))).toBe(true);
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      await productionApp.close();
+    }
+  });
+
   it('updates the current user profile', async () => {
     const response = await agent
       .patch('/api/auth/profile')
@@ -258,6 +298,29 @@ describe('GymHelper API (e2e)', () => {
 
   it('forbids a regular user from admin routes', async () => {
     await agent.get('/api/admin/users').expect(403);
+  });
+
+  it('rejects impossible calendar dates', async () => {
+    const workoutResponse = await agent
+      .get('/api/workouts/2026-02-31')
+      .expect(400);
+    const workoutBody = getBody<ErrorResponse>(workoutResponse);
+
+    expect(workoutBody.message).toBe(
+      'Field "date" must contain a real calendar date.',
+    );
+
+    const restResponse = await agent
+      .put('/api/rest/2026-02-31')
+      .send({
+        isRest: true,
+      })
+      .expect(400);
+    const restBody = getBody<ErrorResponse>(restResponse);
+
+    expect(restBody.message).toBe(
+      'Field "date" must contain a real calendar date.',
+    );
   });
 
   it('allows an admin to list users and change roles', async () => {

@@ -23,11 +23,7 @@ export class ComplexityPlugin implements ApolloServerPlugin<BaseContext> {
 
     return Promise.resolve({
       didResolveOperation({ request, document }) {
-        if (
-          request.operationName === 'IntrospectionQuery' ||
-          request.query?.includes('__schema') ||
-          request.query?.includes('__type')
-        ) {
+        if (request.operationName === 'IntrospectionQuery') {
           return Promise.resolve();
         }
 

@@ -32,12 +32,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SessionAuthGuard } from './session-auth.guard';
-
-function toError(error: unknown) {
-  return error instanceof Error
-    ? error
-    : new Error('Unexpected session error.');
-}
+import { destroyUserSession, establishUserSession } from './session.util';
 
 @Controller('api/auth')
 @ApiTags('auth')
@@ -68,7 +63,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ type: ErrorResponseDto })
   async login(@Body() dto: LoginDto, @Req() request: Request) {
     const user = await this.authService.login(dto.email, dto.password);
-    request.session.userId = user.id;
+    await establishUserSession(request, user.id);
 
     return this.authService.toAuthUser(user);
   }
@@ -82,7 +77,7 @@ export class AuthController {
       dto.email,
       dto.password,
     );
-    request.session.userId = user.id;
+    await establishUserSession(request, user.id);
 
     return this.authService.toAuthUser(user);
   }
@@ -128,16 +123,8 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    return new Promise<void>((resolve, reject) => {
-      request.session.destroy((error) => {
-        if (error) {
-          reject(toError(error));
-          return;
-        }
-
-        response.clearCookie('gymhelper.sid');
-        resolve();
-      });
+    return destroyUserSession(request).then(() => {
+      response.clearCookie('gymhelper.sid');
     });
   }
 }

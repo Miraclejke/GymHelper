@@ -1,3 +1,11 @@
+export const AUTH_EXPIRED_EVENT = 'gymhelper:auth-expired';
+
+function notifyAuthExpired() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+  }
+}
+
 async function readErrorMessage(response: Response) {
   try {
     const payload = (await response.json()) as {
@@ -37,6 +45,10 @@ export async function requestJson<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
+
     throw new Error(await readErrorMessage(response));
   }
 
