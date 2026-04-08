@@ -2,6 +2,7 @@ require('dotenv/config');
 
 const { randomBytes, scryptSync } = require('node:crypto');
 const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 const { PrismaClient, UserRole, Weekday } = require('@prisma/client');
 
 const connectionString = process.env.DATABASE_URL;
@@ -10,20 +11,27 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is not set.');
 }
 
-const withRenderSsl = (value) => {
-  if (
-    /sslmode=/i.test(value) ||
-    (!value.includes('render.com') && !value.includes('dpg-'))
-  ) {
-    return value;
+const isRenderConnection = (value) =>
+  value.includes('render.com') || value.includes('dpg-');
+
+const toPoolConfig = (value) => {
+  if (!isRenderConnection(value)) {
+    return { connectionString: value };
   }
 
-  const separator = value.includes('?') ? '&' : '?';
-  return `${value}${separator}sslmode=require`;
+  const url = new URL(value);
+  url.searchParams.delete('sslmode');
+
+  return {
+    connectionString: url.toString(),
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  };
 };
 
-const adapter = new PrismaPg({
-  connectionString: withRenderSsl(connectionString),
+const adapter = new PrismaPg(new Pool(toPoolConfig(connectionString)), {
+  disposeExternalPool: true,
 });
 const prisma = new PrismaClient({ adapter });
 

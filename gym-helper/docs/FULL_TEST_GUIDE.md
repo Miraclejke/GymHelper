@@ -444,13 +444,16 @@ npm run build
    - `Region`: лучше ту же, что и у web service.
 4. Создать базу.
 
-После создания базы Render покажет несколько строк подключения. Для проекта нужна именно:
+После создания базы Render покажет несколько строк подключения. Нужны обе:
 
 ```text
+Internal Database URL
 External Database URL
 ```
 
-Именно это значение нужно вставить в переменную окружения `DATABASE_URL`.
+Как использовать:
+- `Internal Database URL` нужно вставить в `DATABASE_URL` у самого `Web Service` на Render;
+- `External Database URL` нужен для локального подключения с твоего компьютера, например для `prisma:seed`.
 
 ## 9.3. Какой репозиторий и какую папку выбирать
 
@@ -511,12 +514,12 @@ npm run prisma:migrate:render && npm run start:prod
 
 ### `DATABASE_URL`
 
-Сюда вставить `External Database URL` из созданной базы Render.
+Для `Web Service` на Render сюда нужно вставить `Internal Database URL` из созданной базы Render.
 
 Пример вида:
 
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+DATABASE_URL=postgresql://user:password@internal-host:5432/dbname?sslmode=require
 ```
 
 ### `SESSION_SECRET`
@@ -551,19 +554,27 @@ CORS_ORIGIN=https://gym-helper.onrender.com
 NODE_ENV=production
 ```
 
+Если ты запускаешь команды локально со своего компьютера, например:
+
+```bash
+npm run prisma:seed
+```
+
+то для локального `.env` или временной переменной PowerShell нужно использовать уже `External Database URL`.
+
 ## 9.6. Полный готовый набор env переменных для Render
 
 В итоге в Render должно получиться примерно так:
 
 ```env
-DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
+DATABASE_URL=postgresql://<user>:<password>@<internal-host>/<database>?sslmode=require
 SESSION_SECRET=<длинный_секрет>
 CORS_ORIGIN=https://<your-service>.onrender.com
 NODE_ENV=production
 ```
 
 Где что брать:
-- `DATABASE_URL` взять из `External Database URL` базы Render;
+- `DATABASE_URL` взять из `Internal Database URL` базы Render;
 - `SESSION_SECRET` придумать самостоятельно;
 - `CORS_ORIGIN` взять из домена web service;
 - `NODE_ENV` задать вручную как `production`.
@@ -638,7 +649,7 @@ npm run prisma:seed
 - `Root Directory`: пусто, если сам репозиторий в GitHub уже начинается с `gym-helper`
 - `Build Command`: `npm install --include=dev && npm run build`
 - `Start Command`: `npm run prisma:migrate:render && npm run start:prod`
-- `DATABASE_URL`: `External Database URL` из PostgreSQL Render
+- `DATABASE_URL`: `Internal Database URL` из PostgreSQL Render
 - `SESSION_SECRET`: длинный случайный секрет
 - `CORS_ORIGIN`: `https://<your-service>.onrender.com`
 - `NODE_ENV`: `production`
@@ -663,7 +674,8 @@ npm run prisma:seed
 
 Что делать:
 - открыть PostgreSQL в Render;
-- заново скопировать `External Database URL`;
+- для `Web Service` заново скопировать `Internal Database URL`;
+- для локальных команд использовать `External Database URL`;
 - вставить его в `DATABASE_URL`.
 
 ### Ошибка 3. После деплоя приложение открылось, но логин не работает
