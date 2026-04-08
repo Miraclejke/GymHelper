@@ -1,13 +1,60 @@
-import { INestApplication } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
-import type { SuperAgentTest } from 'supertest';
+import type { Response as SupertestResponse, SuperAgentTest } from 'supertest';
 import { AppModule } from './../src/app.module';
 import { configureApp } from './../src/app.setup';
+import type {
+  AdminUserResponse,
+  AuthUserResponse,
+  DashboardSummaryResponse,
+  NutritionDayResponse,
+  PaginatedResponse,
+  PlanExerciseResponse,
+  RestDayResponse,
+  WeeklyPlanResponse,
+  WorkoutDayResponse,
+} from './../src/common/api.types';
 import { PrismaService } from './../src/prisma/prisma.service';
+
+type ErrorResponse = {
+  statusCode: number;
+  error: string;
+  message?: string | string[];
+};
+
+type SwaggerDocument = {
+  info: {
+    title: string;
+  };
+  paths: Record<string, unknown>;
+};
+
+type GraphqlResponse<TData> = {
+  data: TData;
+  errors?: Array<{
+    message: string;
+  }>;
+};
+
+type SavePlanMutation = {
+  savePlanDay: PlanExerciseResponse[];
+};
+
+type SaveWorkoutMutation = {
+  saveWorkoutDay: WorkoutDayResponse;
+};
+
+type GraphqlStateQuery = {
+  me: AuthUserResponse;
+  weeklyPlan: WeeklyPlanResponse;
+  planDay: PlanExerciseResponse[];
+  workoutDay: WorkoutDayResponse;
+  workouts: PaginatedResponse<WorkoutDayResponse>;
+  dashboardSummary: DashboardSummaryResponse;
+};
 
 function getTodayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -19,8 +66,20 @@ function getIsoDateOffset(offset: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function getBody<T>(response: SupertestResponse) {
+  return response.body as T;
+}
+
+function expectNoGraphqlErrors<TData>(
+  response: SupertestResponse,
+): GraphqlResponse<TData> {
+  const body = getBody<GraphqlResponse<TData>>(response);
+  expect(body.errors).toBeUndefined();
+  return body;
+}
+
 describe('GymHelper API (e2e)', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let agent: SuperAgentTest;
   let adminCandidateAgent: SuperAgentTest;
   let prisma: PrismaService;
@@ -35,12 +94,16 @@ describe('GymHelper API (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication<NestExpressApplication>();
-    configureApp(app as NestExpressApplication);
+    configureApp(app);
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
-    agent = request.agent(app.getHttpServer());
-    adminCandidateAgent = request.agent(app.getHttpServer());
+
+    const httpServer = app.getHttpServer() as Parameters<
+      typeof request.agent
+    >[0];
+    agent = request.agent(httpServer);
+    adminCandidateAgent = request.agent(httpServer);
   });
 
   afterAll(async () => {
@@ -52,6 +115,15 @@ describe('GymHelper API (e2e)', () => {
 
     expect(response.headers['content-type']).toMatch(/html/);
     expect(response.text).toContain('GymHelper');
+  });
+
+  it('serves direct SPA routes through the frontend shell', async () => {
+    for (const route of ['/profile', '/admin/users']) {
+      const response = await agent.get(route).expect(200);
+
+      expect(response.headers['content-type']).toMatch(/html/);
+      expect(response.text).toContain('GymHelper');
+    }
   });
 
   it('renders lab1 pages with server and client elapsed time markers', async () => {
@@ -71,9 +143,11 @@ describe('GymHelper API (e2e)', () => {
     expect(docsResponse.text).toContain('swagger-ui');
 
     const jsonResponse = await agent.get('/api/docs-json').expect(200);
-    expect(jsonResponse.body.info.title).toBe('GymHelper API');
-    expect(jsonResponse.body.paths['/api/workouts']).toBeDefined();
-    expect(jsonResponse.body.paths['/api/admin/users']).toBeDefined();
+    const swaggerDocument = getBody<SwaggerDocument>(jsonResponse);
+
+    expect(swaggerDocument.info.title).toBe('GymHelper API');
+    expect(swaggerDocument.paths['/api/workouts']).toBeDefined();
+    expect(swaggerDocument.paths['/api/admin/users']).toBeDefined();
   });
 
   it('validates request payloads', async () => {
@@ -86,11 +160,13 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(400);
 
-    expect(response.body).toMatchObject({
+    const body = getBody<ErrorResponse>(response);
+
+    expect(body).toMatchObject({
       statusCode: 400,
       error: 'Bad Request',
     });
-    expect(Array.isArray(response.body.message)).toBe(true);
+    expect(Array.isArray(body.message)).toBe(true);
   });
 
   it('registers a user and restores the session', async () => {
@@ -105,14 +181,18 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(201);
 
-    expect(registerResponse.body).toMatchObject({
+    const registerBody = getBody<AuthUserResponse>(registerResponse);
+
+    expect(registerBody).toMatchObject({
       name: 'API Test User',
       email: userEmail,
       role: 'user',
     });
 
     const meResponse = await agent.get('/api/auth/me').expect(200);
-    expect(meResponse.body.email).toBe(userEmail);
+    const meBody = getBody<AuthUserResponse>(meResponse);
+
+    expect(meBody.email).toBe(userEmail);
   });
 
   it('updates the current user profile', async () => {
@@ -123,14 +203,18 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
-    expect(response.body).toMatchObject({
+    const body = getBody<AuthUserResponse>(response);
+
+    expect(body).toMatchObject({
       email: userEmail,
       name: 'Updated API User',
       role: 'user',
     });
 
     const meResponse = await agent.get('/api/auth/me').expect(200);
-    expect(meResponse.body.name).toBe('Updated API User');
+    const meBody = getBody<AuthUserResponse>(meResponse);
+
+    expect(meBody.name).toBe('Updated API User');
   });
 
   it('changes the current user password and invalidates the old one', async () => {
@@ -164,7 +248,9 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
-    expect(loginResponse.body).toMatchObject({
+    const loginBody = getBody<AuthUserResponse>(loginResponse);
+
+    expect(loginBody).toMatchObject({
       email: userEmail,
       role: 'user',
     });
@@ -186,29 +272,33 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(201);
 
-    adminUserId = registerResponse.body.id;
+    const registerBody = getBody<AuthUserResponse>(registerResponse);
+    adminUserId = registerBody.id;
 
     await prisma.user.update({
       where: { id: adminUserId },
       data: { role: UserRole.ADMIN },
     });
 
-    const listResponse = await adminCandidateAgent.get('/api/admin/users').expect(200);
+    const listResponse = await adminCandidateAgent
+      .get('/api/admin/users')
+      .expect(200);
+    const listBody = getBody<AdminUserResponse[]>(listResponse);
 
-    expect(Array.isArray(listResponse.body)).toBe(true);
-    expect(
-      listResponse.body.some((entry: { email: string }) => entry.email === userEmail),
-    ).toBe(true);
+    expect(Array.isArray(listBody)).toBe(true);
+    expect(listBody.some((entry) => entry.email === userEmail)).toBe(true);
 
     const updateResponse = await adminCandidateAgent
-      .patch(`/api/admin/users/${registerResponse.body.id}/role`)
+      .patch(`/api/admin/users/${registerBody.id}/role`)
       .send({
         role: 'user',
       })
       .expect(200);
 
-    expect(updateResponse.body).toMatchObject({
-      id: registerResponse.body.id,
+    const updateBody = getBody<AdminUserResponse>(updateResponse);
+
+    expect(updateBody).toMatchObject({
+      id: registerBody.id,
       email: adminEmail,
       role: 'user',
     });
@@ -221,25 +311,26 @@ describe('GymHelper API (e2e)', () => {
     const secondListResponse = await adminCandidateAgent
       .get('/api/admin/users')
       .expect(200);
+    const secondListBody = getBody<AdminUserResponse[]>(secondListResponse);
 
     expect(
-      secondListResponse.body.some(
-        (entry: { email: string; role: string }) =>
-          entry.email === adminEmail && entry.role === 'admin',
+      secondListBody.some(
+        (entry) => entry.email === adminEmail && entry.role === 'admin',
       ),
     ).toBe(true);
   });
 
   it('returns timing and HTTP cache headers for suggestion endpoints', async () => {
     const firstResponse = await agent.get('/api/plan/suggestions').expect(200);
+    const suggestions = getBody<string[]>(firstResponse);
 
     expect(firstResponse.headers['cache-control']).toBe(
       'private, max-age=3600',
     );
     expect(firstResponse.headers['etag']).toMatch(/^".+"$/);
     expect(firstResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
-    expect(Array.isArray(firstResponse.body)).toBe(true);
-    expect(firstResponse.body.length).toBeGreaterThan(0);
+    expect(Array.isArray(suggestions)).toBe(true);
+    expect(suggestions.length).toBeGreaterThan(0);
 
     const notModifiedResponse = await agent
       .get('/api/plan/suggestions')
@@ -282,10 +373,12 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
+    const savePlanBody =
+      expectNoGraphqlErrors<SavePlanMutation>(savePlanResponse);
+
     expect(savePlanResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
-    expect(savePlanResponse.body.errors).toBeUndefined();
-    expect(savePlanResponse.body.data.savePlanDay).toHaveLength(1);
-    expect(savePlanResponse.body.data.savePlanDay[0]).toMatchObject({
+    expect(savePlanBody.data.savePlanDay).toHaveLength(1);
+    expect(savePlanBody.data.savePlanDay[0]).toMatchObject({
       name: 'GraphQL Bench',
       note: '4x8',
     });
@@ -321,13 +414,15 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
-    expect(saveWorkoutResponse.body.errors).toBeUndefined();
-    expect(saveWorkoutResponse.body.data.saveWorkoutDay.date).toBe(today);
-    expect(saveWorkoutResponse.body.data.saveWorkoutDay.exercises[0]).toMatchObject({
+    const saveWorkoutBody =
+      expectNoGraphqlErrors<SaveWorkoutMutation>(saveWorkoutResponse);
+
+    expect(saveWorkoutBody.data.saveWorkoutDay.date).toBe(today);
+    expect(saveWorkoutBody.data.saveWorkoutDay.exercises[0]).toMatchObject({
       name: 'GraphQL Press',
     });
     expect(
-      saveWorkoutResponse.body.data.saveWorkoutDay.exercises[0].sets[0],
+      saveWorkoutBody.data.saveWorkoutDay.exercises[0].sets[0],
     ).toMatchObject({
       weight: 50,
       reps: 10,
@@ -378,25 +473,26 @@ describe('GymHelper API (e2e)', () => {
       })
       .expect(200);
 
+    const queryBody = expectNoGraphqlErrors<GraphqlStateQuery>(queryResponse);
+
     expect(queryResponse.headers['x-elapsed-time']).toMatch(/^\d+ms$/);
-    expect(queryResponse.body.errors).toBeUndefined();
-    expect(queryResponse.body.data.me.email).toBe(userEmail);
-    expect(queryResponse.body.data.weeklyPlan.mon[0]).toMatchObject({
+    expect(queryBody.data.me.email).toBe(userEmail);
+    expect(queryBody.data.weeklyPlan.mon[0]).toMatchObject({
       name: 'GraphQL Bench',
       note: '4x8',
     });
-    expect(queryResponse.body.data.planDay[0]).toMatchObject({
+    expect(queryBody.data.planDay[0]).toMatchObject({
       name: 'GraphQL Bench',
     });
-    expect(queryResponse.body.data.workoutDay.exercises[0]).toMatchObject({
+    expect(queryBody.data.workoutDay.exercises[0]).toMatchObject({
       name: 'GraphQL Press',
     });
-    expect(queryResponse.body.data.workouts).toMatchObject({
+    expect(queryBody.data.workouts).toMatchObject({
       page: 1,
       limit: 5,
       total: 1,
     });
-    expect(queryResponse.body.data.dashboardSummary.workoutDays).toBe(1);
+    expect(queryBody.data.dashboardSummary.workoutDays).toBe(1);
   }, 15000);
 
   it('saves and loads plan, workout, nutrition and rest data', async () => {
@@ -412,16 +508,21 @@ describe('GymHelper API (e2e)', () => {
         ],
       })
       .expect(200);
+    const planBody = getBody<PlanExerciseResponse[]>(planResponse);
 
-    expect(planResponse.body).toHaveLength(2);
+    expect(planBody).toHaveLength(2);
 
-    const loadedPlan = await agent.get('/api/plan/mon').expect(200);
-    expect(loadedPlan.body).toHaveLength(2);
-    expect(loadedPlan.body[0].name).toBe('Bench press');
+    const loadedPlanResponse = await agent.get('/api/plan/mon').expect(200);
+    const loadedPlanBody = getBody<PlanExerciseResponse[]>(loadedPlanResponse);
 
-    const weeklyPlan = await agent.get('/api/plan').expect(200);
-    expect(weeklyPlan.body.mon).toHaveLength(2);
-    expect(weeklyPlan.body.sun).toHaveLength(0);
+    expect(loadedPlanBody).toHaveLength(2);
+    expect(loadedPlanBody[0].name).toBe('Bench press');
+
+    const weeklyPlanResponse = await agent.get('/api/plan').expect(200);
+    const weeklyPlanBody = getBody<WeeklyPlanResponse>(weeklyPlanResponse);
+
+    expect(weeklyPlanBody.mon).toHaveLength(2);
+    expect(weeklyPlanBody.sun).toHaveLength(0);
 
     await agent
       .put(`/api/workouts/${today}`)
@@ -445,9 +546,10 @@ describe('GymHelper API (e2e)', () => {
         ],
       })
       .expect(200);
+    const workoutBody = getBody<WorkoutDayResponse>(workoutResponse);
 
-    expect(workoutResponse.body.date).toBe(today);
-    expect(workoutResponse.body.exercises).toHaveLength(1);
+    expect(workoutBody.date).toBe(today);
+    expect(workoutBody.exercises).toHaveLength(1);
 
     const secondWorkoutResponse = await agent
       .put(`/api/workouts/${yesterday}`)
@@ -460,20 +562,30 @@ describe('GymHelper API (e2e)', () => {
         ],
       })
       .expect(200);
+    const secondWorkoutBody = getBody<WorkoutDayResponse>(
+      secondWorkoutResponse,
+    );
 
-    expect(secondWorkoutResponse.body.date).toBe(yesterday);
+    expect(secondWorkoutBody.date).toBe(yesterday);
 
     const nutritionResponse = await agent
       .put(`/api/nutrition/${today}`)
       .send({
         meals: [
           { title: 'Oatmeal', calories: 450, protein: 18, fat: 10, carbs: 65 },
-          { title: 'Chicken and rice', calories: 700, protein: 50, fat: 15, carbs: 85 },
+          {
+            title: 'Chicken and rice',
+            calories: 700,
+            protein: 50,
+            fat: 15,
+            carbs: 85,
+          },
         ],
       })
       .expect(200);
+    const nutritionBody = getBody<NutritionDayResponse>(nutritionResponse);
 
-    expect(nutritionResponse.body.meals).toHaveLength(2);
+    expect(nutritionBody.meals).toHaveLength(2);
 
     const restResponse = await agent
       .put(`/api/rest/${today}`)
@@ -484,33 +596,43 @@ describe('GymHelper API (e2e)', () => {
         note: 'Felt good',
       })
       .expect(200);
+    const restBody = getBody<RestDayResponse>(restResponse);
 
-    expect(restResponse.body.sleepHours).toBe(8.5);
+    expect(restBody.sleepHours).toBe(8.5);
   }, 15000);
 
   it('returns paginated workout collections with Link headers', async () => {
-    const firstPage = await agent.get('/api/workouts?page=1&limit=1').expect(200);
+    const firstPageResponse = await agent
+      .get('/api/workouts?page=1&limit=1')
+      .expect(200);
+    const firstPageBody =
+      getBody<PaginatedResponse<WorkoutDayResponse>>(firstPageResponse);
 
-    expect(firstPage.body).toMatchObject({
+    expect(firstPageBody).toMatchObject({
       page: 1,
       limit: 1,
       total: 2,
       totalPages: 2,
     });
-    expect(firstPage.body.items).toHaveLength(1);
-    expect(firstPage.headers['x-total-count']).toBe('2');
-    expect(firstPage.headers['link']).toContain('rel="next"');
+    expect(firstPageBody.items).toHaveLength(1);
+    expect(firstPageResponse.headers['x-total-count']).toBe('2');
+    expect(firstPageResponse.headers['link']).toContain('rel="next"');
 
-    const secondPage = await agent.get('/api/workouts?page=2&limit=1').expect(200);
+    const secondPageResponse = await agent
+      .get('/api/workouts?page=2&limit=1')
+      .expect(200);
+    const secondPageBody =
+      getBody<PaginatedResponse<WorkoutDayResponse>>(secondPageResponse);
 
-    expect(secondPage.body.items).toHaveLength(1);
-    expect(secondPage.headers['link']).toContain('rel="prev"');
+    expect(secondPageBody.items).toHaveLength(1);
+    expect(secondPageResponse.headers['link']).toContain('rel="prev"');
   });
 
   it('returns dashboard summary from backend business logic', async () => {
     const response = await agent.get('/api/dashboard/summary').expect(200);
+    const body = getBody<DashboardSummaryResponse>(response);
 
-    expect(response.body).toMatchObject({
+    expect(body).toMatchObject({
       workoutDays: 2,
       avgCalories: 1150,
       avgSleep: 8.5,

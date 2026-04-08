@@ -4,6 +4,22 @@ import type { Response } from 'express';
 import { join } from 'path';
 import { AppService } from './app.service';
 
+const SPA_ROUTES = [
+  '',
+  'login',
+  'register',
+  'profile',
+  'plan',
+  'workout',
+  'workout/:date',
+  'nutrition',
+  'nutrition/:date',
+  'rest',
+  'rest/:date',
+  'admin/users',
+  '404',
+];
+
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
@@ -20,21 +36,9 @@ export class AppController {
     return this.appService.getLabExercisesViewModel(auth);
   }
 
-  @Get([
-    '',
-    'login',
-    'register',
-    'plan',
-    'workout',
-    'workout/:date',
-    'nutrition',
-    'nutrition/:date',
-    'rest',
-    'rest/:date',
-    '404',
-  ])
+  @Get(SPA_ROUTES)
   serveSpa(@Res() res: Response) {
-    const indexPath = join(__dirname, '..', 'public', 'index.html');
+    const indexPath = join(process.cwd(), 'public', 'index.html');
 
     if (existsSync(indexPath)) {
       return res.sendFile(indexPath);

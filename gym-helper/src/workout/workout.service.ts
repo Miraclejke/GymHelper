@@ -62,7 +62,10 @@ export class WorkoutService {
     );
   }
 
-  async getDay(userId: string, date: string): Promise<WorkoutDayResponse | null> {
+  async getDay(
+    userId: string,
+    date: string,
+  ): Promise<WorkoutDayResponse | null> {
     const day = await this.prisma.workoutDay.findUnique({
       where: {
         userId_date: {

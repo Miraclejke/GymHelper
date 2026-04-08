@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PlanExerciseResponse,
-  WeeklyPlanResponse,
-} from '../common/api.types';
+import { PlanExerciseResponse, WeeklyPlanResponse } from '../common/api.types';
 import { DEFAULT_EXERCISE_SUGGESTIONS } from '../common/suggestions';
 import { fromWeekday, WEEKDAY_ORDER, toWeekday } from '../common/weekday.util';
 import { PrismaService } from '../prisma/prisma.service';
@@ -50,7 +47,10 @@ export class PlanService {
     return result;
   }
 
-  async getDay(userId: string, weekdayKey: string): Promise<PlanExerciseResponse[]> {
+  async getDay(
+    userId: string,
+    weekdayKey: string,
+  ): Promise<PlanExerciseResponse[]> {
     const weekday = toWeekday(weekdayKey);
     const day = await this.prisma.planDay.findUnique({
       where: {

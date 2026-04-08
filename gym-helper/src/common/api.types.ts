@@ -1,5 +1,12 @@
 export type UserRoleValue = 'user' | 'admin';
-export type WeekdayValue = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type WeekdayValue =
+  | 'mon'
+  | 'tue'
+  | 'wed'
+  | 'thu'
+  | 'fri'
+  | 'sat'
+  | 'sun';
 
 export type AuthUserResponse = {
   id: string;

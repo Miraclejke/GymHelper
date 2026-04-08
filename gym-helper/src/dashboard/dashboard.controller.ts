@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  MessageEvent,
-  Sse,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, MessageEvent, Sse, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,

@@ -11,10 +11,7 @@ import { map } from 'rxjs/operators';
 
 @Injectable()
 export class ETagInterceptor implements NestInterceptor {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType<string>() !== 'http') {
       return next.handle();
     }
@@ -27,7 +24,7 @@ export class ETagInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      map((value) => {
+      map((value: unknown) => {
         if (
           value === undefined ||
           response.headersSent ||
@@ -40,9 +37,12 @@ export class ETagInterceptor implements NestInterceptor {
         response.setHeader('ETag', etag);
 
         const ifNoneMatch = request.headers['if-none-match'];
-        if (typeof ifNoneMatch === 'string' && this.matches(ifNoneMatch, etag)) {
+        if (
+          typeof ifNoneMatch === 'string' &&
+          this.matches(ifNoneMatch, etag)
+        ) {
           response.status(304);
-          return undefined;
+          return undefined as unknown;
         }
 
         return value;

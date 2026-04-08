@@ -18,17 +18,17 @@ const MAX_QUERY_COMPLEXITY = 30;
 export class ComplexityPlugin implements ApolloServerPlugin<BaseContext> {
   constructor(private readonly gqlSchemaHost: GraphQLSchemaHost) {}
 
-  async requestDidStart(): Promise<GraphQLRequestListener<BaseContext>> {
+  requestDidStart(): Promise<GraphQLRequestListener<BaseContext>> {
     const { schema } = this.gqlSchemaHost;
 
-    return {
-      async didResolveOperation({ request, document }) {
+    return Promise.resolve({
+      didResolveOperation({ request, document }) {
         if (
           request.operationName === 'IntrospectionQuery' ||
           request.query?.includes('__schema') ||
           request.query?.includes('__type')
         ) {
-          return;
+          return Promise.resolve();
         }
 
         const complexity = getComplexity({
@@ -47,7 +47,9 @@ export class ComplexityPlugin implements ApolloServerPlugin<BaseContext> {
             `Query is too complex: ${complexity}. Maximum allowed complexity is ${MAX_QUERY_COMPLEXITY}.`,
           );
         }
+
+        return Promise.resolve();
       },
-    };
+    });
   }
 }

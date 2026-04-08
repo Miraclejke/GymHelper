@@ -16,9 +16,8 @@ export class DashboardService {
 
   async getSummary(userId: string): Promise<DashboardSummaryResponse> {
     const cacheKey = getDashboardSummaryCacheKey(userId);
-    const cached = await this.cacheManager.get<DashboardSummaryResponse>(
-      cacheKey,
-    );
+    const cached =
+      await this.cacheManager.get<DashboardSummaryResponse>(cacheKey);
 
     if (cached) {
       return cached;

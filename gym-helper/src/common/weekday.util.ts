@@ -1,14 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Weekday } from '@prisma/client';
 
-export type WeekdayKey =
-  | 'mon'
-  | 'tue'
-  | 'wed'
-  | 'thu'
-  | 'fri'
-  | 'sat'
-  | 'sun';
+export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
 export const WEEKDAY_ORDER: WeekdayKey[] = [
   'mon',

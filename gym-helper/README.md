@@ -1,77 +1,70 @@
-# GymHelper Backend
+# GymHelper
 
-Backend-часть учебного проекта `GymHelper`, объединяющая:
+Учебный full-stack проект для 7 лабораторных работ по backend-разработке.
+
+Проект объединяет:
 - `NestJS` backend;
 - `React SPA` в папке `frontend/`;
 - `PostgreSQL + Prisma`;
-- `REST API`, `GraphQL`, `Swagger`, `SSE`;
-- две демонстрационные `Handlebars`-страницы для ЛР1.
+- `REST API`, `Swagger`, `GraphQL`, `SSE`;
+- две учебные `Handlebars`-страницы для ЛР1 и ЛР6.
 
-## Быстрый статус
+## Что важно
 
-ЛР1-ЛР7 в проекте реализованы.
+- Основной пользовательский интерфейс: `React SPA`.
+- `Handlebars` сохранены как отдельный учебный серверный слой.
+- Файлы и `S3/Object Storage` сознательно не реализуются.
+- Внешний auth-провайдер не используется: для учебного проекта оставлена простая session-based auth.
 
-Важно:
-- ЛР3 и ЛР6 адаптированы под реальный проект, а не повторяют методичку буквально.
-- В ЛР6 файловая часть сознательно исключена: в домене проекта нет необходимости в загрузке файлов.
+## Быстрый старт
 
-Подробности:
-- карта документации: `docs/README.md`
-- аудит выполнения: `docs/context/LAB1_LAB7_AUDIT.md`
-- onboarding для нового чата: `docs/context/CODEX_ONBOARDING.md`
-- исторические отчеты: `docs/reports/REPORT_LR1_LR3.md`, `docs/reports/REPORT_LR4.md`, `docs/reports/REPORT_LR5.md`, `docs/reports/REPORT_LR6.md`, `docs/reports/REPORT_LR7.md`
-- план ЛР7: `docs/plans/LAB7_IMPLEMENTATION_PLAN.md`
-
-## Стек
-
-- `NestJS 11`
-- `Prisma 7`
-- `PostgreSQL`
-- `React + Vite`
-- `Swagger / OpenAPI`
-- `GraphQL (code-first, Apollo)`
-- `express-session`
-- `Handlebars`
-
-## Основные команды
+1. Установить зависимости:
 
 ```bash
 npm install
-npm run prisma:generate
-npm run start:dev
 ```
 
-Полезные команды:
+2. Создать `.env` по примеру `.env.example` и указать `DATABASE_URL`.
+
+3. Применить миграции и заполнить демо-данные:
 
 ```bash
-npm run build
-npm test -- --runInBand
-npm run test:e2e -- --runInBand
 npm run prisma:migrate:dev
 npm run prisma:seed
 ```
 
-Frontend собирается из `frontend/` автоматически через `npm run build`.
+4. Запустить проект:
 
-## Что где лежит
+```bash
+npm run start:dev
+```
 
-- `src/` - backend-код NestJS
-- `frontend/` - React SPA
-- `views/` - Handlebars-шаблоны для ЛР1
-- `prisma/` - схема, миграции, seed
-- `test/` - e2e-тесты
-- `docs/` - вся проектная документация, планы, отчеты и исходные методички
+## Основные команды
+
+```bash
+npm run build
+npm run lint
+npm test -- --runInBand
+npm run test:e2e -- --runInBand
+npm run prisma:migrate:deploy
+npm run prisma:seed
+```
 
 ## Точки входа
 
+- React SPA: `/`
+- ЛР1 Handlebars: `/lab1`, `/lab1/exercises`
 - REST API: `/api/...`
 - Swagger UI: `/api/docs`
 - Swagger JSON: `/api/docs-json`
 - GraphQL / GraphiQL: `/graphql`
 - SSE: `/api/dashboard/stream`
-- ЛР1 Handlebars pages: `/lab1`, `/lab1/exercises`
-- React SPA: `/`
 
-## Текущее состояние проекта
+## Документация
 
-Проект уже не использует загрузку файлов, S3 и аватары. Если в истории миграций встречаются временные миграции на `avatarUrl`, это след от промежуточного эксперимента, а не актуальная часть доменной модели.
+- обзор проекта: [docs/PROJECT_DESCRIPTION.md](./docs/PROJECT_DESCRIPTION.md)
+- полная настройка и проверка: [docs/FULL_TEST_GUIDE.md](./docs/FULL_TEST_GUIDE.md)
+- аудит ЛР1-ЛР7: [docs/context/LAB1_LAB7_AUDIT.md](./docs/context/LAB1_LAB7_AUDIT.md)
+- onboarding по коду: [docs/context/CODEX_ONBOARDING.md](./docs/context/CODEX_ONBOARDING.md)
+- исходные методички: [docs/source-labs](./docs/source-labs)
+- исторические отчеты: [docs/reports](./docs/reports)

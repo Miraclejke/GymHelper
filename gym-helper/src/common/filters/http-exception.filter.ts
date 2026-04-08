@@ -26,7 +26,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
     const request = context.getRequest<Request>();
-    const payload = this.toPayload(exception, request.originalUrl || request.url);
+    const payload = this.toPayload(
+      exception,
+      request.originalUrl || request.url,
+    );
 
     response.status(payload.statusCode).json(payload);
   }
@@ -120,19 +123,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   private getErrorLabel(statusCode: number) {
-    switch (statusCode) {
-      case HttpStatus.BAD_REQUEST:
-        return 'Bad Request';
-      case HttpStatus.UNAUTHORIZED:
-        return 'Unauthorized';
-      case HttpStatus.FORBIDDEN:
-        return 'Forbidden';
-      case HttpStatus.NOT_FOUND:
-        return 'Not Found';
-      case HttpStatus.CONFLICT:
-        return 'Conflict';
-      default:
-        return 'Error';
-    }
+    const labels: Record<number, string> = {
+      [HttpStatus.BAD_REQUEST]: 'Bad Request',
+      [HttpStatus.UNAUTHORIZED]: 'Unauthorized',
+      [HttpStatus.FORBIDDEN]: 'Forbidden',
+      [HttpStatus.NOT_FOUND]: 'Not Found',
+      [HttpStatus.CONFLICT]: 'Conflict',
+    };
+
+    return labels[statusCode] ?? 'Error';
   }
 }

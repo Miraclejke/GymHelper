@@ -10,6 +10,7 @@ const EMPTY_SUMMARY: DashboardSummary = {
   avgCalories: 0,
   avgSleep: 0,
 };
+const SSE_RECONNECT_DELAY_MS = 3000;
 
 export default function DashboardPage() {
   const today = getTodayISO();
@@ -60,25 +61,50 @@ export default function DashboardPage() {
   }, [requestId]);
 
   useEffect(() => {
-    const eventSource = new EventSource('/api/dashboard/stream');
+    let isActive = true;
+    let reconnectTimer: number | undefined;
+    let currentSource: EventSource | null = null;
 
-    eventSource.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data) as { message?: string };
-        setLiveMessage(payload.message ?? 'Данные обновлены.');
-      } catch {
-        setLiveMessage('Данные обновлены.');
+    const connect = () => {
+      if (!isActive) {
+        return;
       }
 
-      setRequestId((currentValue) => currentValue + 1);
+      const source = new EventSource('/api/dashboard/stream');
+      currentSource = source;
+
+      source.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data) as { message?: string };
+          setLiveMessage(payload.message ?? 'Данные обновлены.');
+        } catch {
+          setLiveMessage('Данные обновлены.');
+        }
+
+        setRequestId((currentValue) => currentValue + 1);
+      };
+
+      source.onerror = () => {
+        source.close();
+
+        if (!isActive) {
+          return;
+        }
+
+        reconnectTimer = window.setTimeout(connect, SSE_RECONNECT_DELAY_MS);
+      };
     };
 
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
+    connect();
 
     return () => {
-      eventSource.close();
+      isActive = false;
+
+      if (reconnectTimer !== undefined) {
+        window.clearTimeout(reconnectTimer);
+      }
+
+      currentSource?.close();
     };
   }, []);
 

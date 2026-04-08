@@ -13,10 +13,7 @@ import { map } from 'rxjs/operators';
 export class RequestTimingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(RequestTimingInterceptor.name);
 
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType<string>() !== 'http') {
       return next.handle();
     }
@@ -32,9 +29,10 @@ export class RequestTimingInterceptor implements NestInterceptor {
     const startedAt = process.hrtime.bigint();
 
     return next.handle().pipe(
-      map((value) => {
-        const elapsedMs = Number(
-          (process.hrtime.bigint() - startedAt) / BigInt(1_000_000),
+      map((value: unknown) => {
+        const elapsedMs = Math.max(
+          1,
+          Number((process.hrtime.bigint() - startedAt) / BigInt(1_000_000)),
         );
 
         this.logger.log(`${request.method} ${path} - ${elapsedMs}ms`);

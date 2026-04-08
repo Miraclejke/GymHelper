@@ -38,13 +38,15 @@ type LabPageViewModel = {
 
 const SPA_LINKS = [
   {
-    description: 'Текущая React-страница с краткой статистикой и быстрыми переходами.',
+    description:
+      'Текущая React-страница с краткой статистикой и быстрыми переходами.',
     href: '/',
     meta: 'React SPA',
     title: 'Дашборд',
   },
   {
-    description: 'Недельный план тренировок, который сейчас хранится локально в mock API.',
+    description:
+      'Недельный план тренировок, который читается и сохраняется через backend API.',
     href: '/plan',
     meta: 'План на неделю',
     title: 'План',
@@ -62,7 +64,7 @@ const SPA_LINKS = [
     title: 'Питание',
   },
   {
-    description: 'Запись сна и отдыха, которая позже будет перенесена на backend.',
+    description: 'Запись сна и отдыха на выбранную дату через backend API.',
     href: '/rest/2026-04-07',
     meta: 'Сон и восстановление',
     title: 'Отдых',
@@ -168,7 +170,10 @@ export class AppService {
     ];
   }
 
-  private buildSession(authParam: string | undefined, currentPath: string): SessionViewModel {
+  private buildSession(
+    authParam: string | undefined,
+    currentPath: string,
+  ): SessionViewModel {
     const authMode: AuthMode = authParam === 'user' ? 'user' : 'guest';
     const authQuery = authMode === 'user' ? '?auth=user' : '?auth=guest';
 

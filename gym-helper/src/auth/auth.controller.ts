@@ -33,6 +33,12 @@ import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SessionAuthGuard } from './session-auth.guard';
 
+function toError(error: unknown) {
+  return error instanceof Error
+    ? error
+    : new Error('Unexpected session error.');
+}
+
 @Controller('api/auth')
 @ApiTags('auth')
 @ApiBadRequestResponse({ type: ErrorResponseDto })
@@ -87,7 +93,10 @@ export class AuthController {
   @ApiCookieAuth('session')
   @ApiOkResponse({ type: AuthUserResponseDto })
   @ApiUnauthorizedResponse({ type: ErrorResponseDto })
-  updateProfile(@CurrentUserId() userId: string, @Body() dto: UpdateProfileDto) {
+  updateProfile(
+    @CurrentUserId() userId: string,
+    @Body() dto: UpdateProfileDto,
+  ) {
     return this.authService.updateProfile(userId, dto.name);
   }
 
@@ -122,7 +131,7 @@ export class AuthController {
     return new Promise<void>((resolve, reject) => {
       request.session.destroy((error) => {
         if (error) {
-          reject(error);
+          reject(toError(error));
           return;
         }
 

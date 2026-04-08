@@ -1,52 +1,43 @@
 # Документация GymHelper
 
-Эта папка содержит всю текстовую документацию проекта отдельно от кода реализации.
+Эта папка содержит всю документацию проекта: актуальные описания, исторические отчеты и исходные методички лабораторных работ.
 
-## Структура
+## Основные файлы
 
-- `context/`
-  - актуальный контекст проекта
-  - onboarding для нового чата
-  - аудит выполнения ЛР1-ЛР7
-  - описание frontend-части
+- [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)  
+  Полное описание проекта, архитектуры и того, как каждая лабораторная работа адаптирована под GymHelper.
 
-- `reports/`
-  - отчеты по лабораторным
-  - `REPORT_LR1_LR3.md`
-  - `REPORT_LR4.md`
-  - `REPORT_LR5.md`
-  - `REPORT_LR6.md`
-  - `REPORT_LR7.md`
+- [FULL_TEST_GUIDE.md](./FULL_TEST_GUIDE.md)  
+  Полный сценарий настройки, проверки, запуска на Render и тестирования из консоли.
 
-- `plans/`
-  - планы и рабочие заметки
-  - `LAB7_IMPLEMENTATION_PLAN.md`
+- [context/CODEX_ONBOARDING.md](./context/CODEX_ONBOARDING.md)  
+  Краткий вход в кодовую базу.
 
-- `source-labs/`
-  - исходные методички `Lab1.md` ... `Lab7.md`
+- [context/LAB1_LAB7_AUDIT.md](./context/LAB1_LAB7_AUDIT.md)  
+  Короткий аудит покрытия ЛР1-ЛР7.
 
-- `archive/desktop-notes/`
-  - старые заметки и промежуточные документы, которые больше не считаются основным источником истины
+## Исторические отчеты
+
+- [reports/REPORT_LR1_LR3.md](./reports/REPORT_LR1_LR3.md)
+- [reports/REPORT_LR4.md](./reports/REPORT_LR4.md)
+- [reports/REPORT_LR5.md](./reports/REPORT_LR5.md)
+- [reports/REPORT_LR6.md](./reports/REPORT_LR6.md)
+- [reports/REPORT_LR7.md](./reports/REPORT_LR7.md)
+
+## Исходные лабораторные
+
+- [source-labs/Lab1.md](./source-labs/Lab1.md)
+- [source-labs/Lab2.md](./source-labs/Lab2.md)
+- [source-labs/Lab3.md](./source-labs/Lab3.md)
+- [source-labs/Lab4.md](./source-labs/Lab4.md)
+- [source-labs/Lab5.md](./source-labs/Lab5.md)
+- [source-labs/Lab6.md](./source-labs/Lab6.md)
+- [source-labs/Lab7.md](./source-labs/Lab7.md)
 
 ## С чего читать
 
-Если нужен быстрый вход в проект:
-
-1. `../README.md`
-2. `context/CODEX_ONBOARDING.md`
-3. `context/LAB1_LAB7_AUDIT.md`
-4. `reports/REPORT_LR1_LR3.md`
-5. `reports/REPORT_LR4.md`
-6. `reports/REPORT_LR5.md`
-7. `reports/REPORT_LR6.md`
-8. `reports/REPORT_LR7.md`
-
-Если нужен контекст по ЛР7:
-
-1. `plans/LAB7_IMPLEMENTATION_PLAN.md`
-2. `reports/REPORT_LR7.md`
-3. `source-labs/Lab7.md`
-
-Если нужен контекст по frontend:
-
-1. `context/описание_фронтенд_части.md`
+1. [../README.md](../README.md)
+2. [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)
+3. [FULL_TEST_GUIDE.md](./FULL_TEST_GUIDE.md)
+4. [context/CODEX_ONBOARDING.md](./context/CODEX_ONBOARDING.md)
+5. [context/LAB1_LAB7_AUDIT.md](./context/LAB1_LAB7_AUDIT.md)

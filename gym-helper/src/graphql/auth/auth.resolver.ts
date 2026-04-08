@@ -5,6 +5,12 @@ import { LoginInput } from './inputs/login.input';
 import { RegisterInput } from './inputs/register.input';
 import { AuthUserType } from './types/auth-user.type';
 
+function toError(error: unknown) {
+  return error instanceof Error
+    ? error
+    : new Error('Unexpected session error.');
+}
+
 @Resolver(() => AuthUserType)
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
@@ -20,7 +26,8 @@ export class AuthResolver {
 
   @Mutation(() => AuthUserType, {
     name: 'login',
-    description: 'Logs in the user and stores the session identifier in the cookie.',
+    description:
+      'Logs in the user and stores the session identifier in the cookie.',
   })
   async login(
     @Args('input') input: LoginInput,
@@ -58,7 +65,7 @@ export class AuthResolver {
     return new Promise<boolean>((resolve, reject) => {
       context.req.session.destroy((error) => {
         if (error) {
-          reject(error);
+          reject(toError(error));
           return;
         }
 

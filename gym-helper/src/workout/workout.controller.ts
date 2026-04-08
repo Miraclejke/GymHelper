@@ -69,7 +69,11 @@ export class WorkoutController {
     @Query() query: PaginationQueryDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.workoutService.list(userId, query.page, query.limit);
+    const result = await this.workoutService.list(
+      userId,
+      query.page,
+      query.limit,
+    );
     setPaginationHeaders(
       response,
       '/api/workouts',

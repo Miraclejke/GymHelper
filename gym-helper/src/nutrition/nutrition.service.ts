@@ -51,7 +51,10 @@ export class NutritionService {
     );
   }
 
-  async getDay(userId: string, date: string): Promise<NutritionDayResponse | null> {
+  async getDay(
+    userId: string,
+    date: string,
+  ): Promise<NutritionDayResponse | null> {
     const day = await this.prisma.nutritionDay.findUnique({
       where: {
         userId_date: {

@@ -21,7 +21,10 @@ import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { ETagInterceptor } from '../common/interceptors/etag.interceptor';
-import { PlanExerciseResponseDto, WeeklyPlanResponseDto } from './dto/plan.response.dto';
+import {
+  PlanExerciseResponseDto,
+  WeeklyPlanResponseDto,
+} from './dto/plan.response.dto';
 import { SavePlanDayDto } from './dto/save-plan-day.dto';
 import { PlanService } from './plan.service';
 

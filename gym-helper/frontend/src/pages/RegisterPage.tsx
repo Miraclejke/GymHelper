@@ -35,7 +35,7 @@ export default function RegisterPage() {
         <div className="card-header">
           <div>
             <h1>Регистрация</h1>
-            <p className="muted">Пока это учебная форма, позже ее заменит настоящий backend auth.</p>
+            <p className="muted">Регистрация нового пользователя с сохранением backend-сессии.</p>
           </div>
         </div>
 

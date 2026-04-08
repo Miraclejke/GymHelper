@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="card-header">
           <div>
             <h1>Вход</h1>
-            <p className="muted">Простой учебный экран входа перед подключением настоящего бэкенда.</p>
+            <p className="muted">Вход в учебный аккаунт GymHelper через backend-сессию.</p>
           </div>
         </div>
 

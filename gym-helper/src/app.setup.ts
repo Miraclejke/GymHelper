@@ -14,8 +14,36 @@ import { RestModule } from './rest/rest.module';
 import { WorkoutModule } from './workout/workout.module';
 
 const EDUCATIONAL_SESSION_SECRET = 'gym-helper-educational-session-secret';
+const SESSION_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+
+function getAllowedOrigins() {
+  const value = process.env.CORS_ORIGIN?.trim();
+
+  if (!value) {
+    return true;
+  }
+
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : true;
+}
+
+function getSessionSecret() {
+  return process.env.SESSION_SECRET?.trim() || EDUCATIONAL_SESSION_SECRET;
+}
+
+function isSecureCookieEnabled() {
+  return process.env.NODE_ENV === 'production';
+}
 
 export function configureApp(app: NestExpressApplication) {
+  app.enableCors({
+    origin: getAllowedOrigins(),
+    credentials: true,
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -27,15 +55,15 @@ export function configureApp(app: NestExpressApplication) {
   app.use(
     session({
       name: 'gymhelper.sid',
-      // Simplified on purpose for the educational project.
-      secret: EDUCATIONAL_SESSION_SECRET,
+      // MemoryStore is acceptable here because this is an educational project.
+      secret: getSessionSecret(),
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        secure: isSecureCookieEnabled(),
+        maxAge: SESSION_MAX_AGE_MS,
       },
     }),
   );

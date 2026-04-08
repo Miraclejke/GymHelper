@@ -52,11 +52,3 @@ export type RestDay = {
   sleepHours?: number;
   note?: string;
 };
-
-export type AppDataState = {
-  weeklyPlan: Record<WeekdayKey, PlanExercise[]>;
-  workouts: Record<string, WorkoutDay>;
-  nutrition: Record<string, NutritionDay>;
-  rest: Record<string, RestDay>;
-  suggestions: string[];
-};

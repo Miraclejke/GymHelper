@@ -1,5 +1,12 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { WorkoutService } from '../../workout/workout.service';
 import { PaginationArgs } from '../common/pagination.args';
 import { GqlCurrentUserId } from '../decorators/gql-current-user-id.decorator';
@@ -41,7 +48,8 @@ export class WorkoutResolver {
   @Mutation(() => WorkoutDayType, {
     name: 'saveWorkoutDay',
     nullable: true,
-    description: 'Creates, updates or removes the workout log for a single date.',
+    description:
+      'Creates, updates or removes the workout log for a single date.',
   })
   saveWorkoutDay(
     @GqlCurrentUserId() userId: string,
