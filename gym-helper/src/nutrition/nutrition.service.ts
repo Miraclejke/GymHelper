@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import {
   MealEntryResponse,
   NutritionDayResponse,
+  PaginatedResponse,
 } from '../common/api.types';
 import { fromDateOnly, toDateOnly } from '../common/date.util';
+import { buildPaginatedResponse } from '../common/pagination.util';
 import { DashboardEventsService } from '../dashboard/dashboard-events.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -14,22 +16,35 @@ export class NutritionService {
     private readonly dashboardEvents: DashboardEventsService,
   ) {}
 
-  async list(userId: string): Promise<Record<string, NutritionDayResponse>> {
-    const days = await this.prisma.nutritionDay.findMany({
-      where: { userId },
-      orderBy: { date: 'asc' },
-      include: {
-        meals: {
-          orderBy: { sortOrder: 'asc' },
+  async list(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<NutritionDayResponse>> {
+    const skip = (page - 1) * limit;
+    const [total, days] = await Promise.all([
+      this.prisma.nutritionDay.count({
+        where: { userId },
+      }),
+      this.prisma.nutritionDay.findMany({
+        where: { userId },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          meals: {
+            orderBy: { sortOrder: 'asc' },
+          },
         },
-      },
-    });
+      }),
+    ]);
 
-    return days.reduce<Record<string, NutritionDayResponse>>((result, day) => {
-      const mapped = this.mapNutritionDay(day);
-      result[mapped.date] = mapped;
-      return result;
-    }, {});
+    return buildPaginatedResponse(
+      days.map((day) => this.mapNutritionDay(day)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async getDay(userId: string, date: string): Promise<NutritionDayResponse | null> {

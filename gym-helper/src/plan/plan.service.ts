@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PlanExerciseResponse } from '../common/api.types';
+import {
+  PlanExerciseResponse,
+  WeeklyPlanResponse,
+} from '../common/api.types';
 import { DEFAULT_EXERCISE_SUGGESTIONS } from '../common/suggestions';
-import { toWeekday } from '../common/weekday.util';
+import { fromWeekday, WEEKDAY_ORDER, toWeekday } from '../common/weekday.util';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -10,6 +13,41 @@ export class PlanService {
 
   getSuggestions() {
     return DEFAULT_EXERCISE_SUGGESTIONS;
+  }
+
+  async getWeek(userId: string): Promise<WeeklyPlanResponse> {
+    const days = await this.prisma.planDay.findMany({
+      where: { userId },
+      include: {
+        exercises: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+      },
+    });
+
+    const result = WEEKDAY_ORDER.reduce<WeeklyPlanResponse>(
+      (week, weekday) => {
+        week[weekday] = [];
+        return week;
+      },
+      {
+        mon: [],
+        tue: [],
+        wed: [],
+        thu: [],
+        fri: [],
+        sat: [],
+        sun: [],
+      },
+    );
+
+    days.forEach((day) => {
+      result[fromWeekday(day.weekday)] = this.mapExercises(day.exercises);
+    });
+
+    return result;
   }
 
   async getDay(userId: string, weekdayKey: string): Promise<PlanExerciseResponse[]> {
@@ -34,11 +72,7 @@ export class PlanService {
       return [];
     }
 
-    return day.exercises.map((exercise) => ({
-      id: exercise.id,
-      name: exercise.name,
-      note: exercise.note,
-    }));
+    return this.mapExercises(day.exercises);
   }
 
   async saveDay(
@@ -102,7 +136,13 @@ export class PlanService {
       },
     });
 
-    return day.exercises.map((exercise) => ({
+    return this.mapExercises(day.exercises);
+  }
+
+  private mapExercises(
+    exercises: Array<{ id: string; name: string; note: string }>,
+  ): PlanExerciseResponse[] {
+    return exercises.map((exercise) => ({
       id: exercise.id,
       name: exercise.name,
       note: exercise.note,

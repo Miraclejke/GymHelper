@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AppGraphqlModule } from './graphql/graphql.module';
 import { NutritionModule } from './nutrition/nutrition.module';
 import { PlanModule } from './plan/plan.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -16,6 +17,7 @@ import { WorkoutModule } from './workout/workout.module';
       isGlobal: true,
     }),
     PrismaModule,
+    AppGraphqlModule,
     AuthModule,
     DashboardModule,
     PlanModule,

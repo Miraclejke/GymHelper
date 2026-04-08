@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
+  PaginatedResponse,
   WorkoutDayResponse,
   WorkoutExerciseResponse,
   WorkoutSetResponse,
 } from '../common/api.types';
 import { fromDateOnly, toDateOnly } from '../common/date.util';
+import { buildPaginatedResponse } from '../common/pagination.util';
 import { DEFAULT_EXERCISE_SUGGESTIONS } from '../common/suggestions';
 import { DashboardEventsService } from '../dashboard/dashboard-events.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,27 +22,40 @@ export class WorkoutService {
     return DEFAULT_EXERCISE_SUGGESTIONS;
   }
 
-  async list(userId: string): Promise<Record<string, WorkoutDayResponse>> {
-    const days = await this.prisma.workoutDay.findMany({
-      where: { userId },
-      orderBy: { date: 'asc' },
-      include: {
-        exercises: {
-          orderBy: { sortOrder: 'asc' },
-          include: {
-            sets: {
-              orderBy: { sortOrder: 'asc' },
+  async list(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<WorkoutDayResponse>> {
+    const skip = (page - 1) * limit;
+    const [total, days] = await Promise.all([
+      this.prisma.workoutDay.count({
+        where: { userId },
+      }),
+      this.prisma.workoutDay.findMany({
+        where: { userId },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          exercises: {
+            orderBy: { sortOrder: 'asc' },
+            include: {
+              sets: {
+                orderBy: { sortOrder: 'asc' },
+              },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
 
-    return days.reduce<Record<string, WorkoutDayResponse>>((result, day) => {
-      const mapped = this.mapWorkoutDay(day);
-      result[mapped.date] = mapped;
-      return result;
-    }, {});
+    return buildPaginatedResponse(
+      days.map((day) => this.mapWorkoutDay(day)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async getDay(userId: string, date: string): Promise<WorkoutDayResponse | null> {

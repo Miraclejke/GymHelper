@@ -1,0 +1,265 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Authenticated GymHelper user returned by GraphQL operations."""
+type AuthUser {
+  """User email address."""
+  email: String!
+
+  """Unique user identifier."""
+  id: String!
+
+  """Display name of the user."""
+  name: String!
+
+  """Role assigned to the user."""
+  role: String!
+}
+
+"""Summary statistics for the dashboard over the last 14 days."""
+type DashboardSummary {
+  """Average number of calories consumed per tracked day."""
+  avgCalories: Int!
+
+  """Average number of sleep hours per tracked day."""
+  avgSleep: Float!
+
+  """Number of workout days with saved exercises."""
+  workoutDays: Int!
+}
+
+"""Credentials used to create a user session."""
+input LoginInput {
+  """Email address of the user."""
+  email: String! = ""
+
+  """Password of the user."""
+  password: String! = ""
+}
+
+type Mutation {
+  """Logs in the user and stores the session identifier in the cookie."""
+  login(input: LoginInput!): AuthUser!
+
+  """Destroys the current session and clears the session cookie."""
+  logout: Boolean!
+
+  """Registers a new user and immediately creates a session."""
+  register(input: RegisterInput!): AuthUser!
+
+  """Replaces the workout plan for a single weekday."""
+  savePlanDay(
+    """Exercises that should be stored for the weekday."""
+    input: SavePlanDayInput!
+
+    """Weekday that should be saved."""
+    weekday: WeekdayKey!
+  ): [PlanExercise!]!
+
+  """Creates, updates or removes the workout log for a single date."""
+  saveWorkoutDay(
+    """Date in YYYY-MM-DD format."""
+    date: String!
+
+    """Exercises that should be stored for the date."""
+    input: SaveWorkoutDayInput!
+  ): WorkoutDay
+}
+
+"""Paginated collection of workout days."""
+type PaginatedWorkoutDays {
+  """Current page of workout days."""
+  items: [WorkoutDay!]!
+
+  """Page size."""
+  limit: Int!
+
+  """Current page number."""
+  page: Int!
+
+  """Total number of workout days."""
+  total: Int!
+
+  """Total number of pages."""
+  totalPages: Int!
+}
+
+"""Exercise item inside the weekly workout plan."""
+type PlanExercise {
+  """Unique exercise identifier."""
+  id: String!
+
+  """Exercise name."""
+  name: String!
+
+  """Optional note for the exercise."""
+  note: String!
+}
+
+"""Exercise entry that can be saved into a plan day."""
+input PlanExerciseInput {
+  """Exercise name."""
+  name: String
+
+  """Optional note for the exercise."""
+  note: String
+}
+
+type Query {
+  """Returns the dashboard summary for the current user."""
+  dashboardSummary: DashboardSummary!
+
+  """Returns default exercise suggestions used by the planner."""
+  exerciseSuggestions: [String!]!
+
+  """Returns the current user from the active session."""
+  me: AuthUser
+
+  """Returns the workout plan for a single weekday."""
+  planDay(
+    """Weekday for which the plan should be returned."""
+    weekday: WeekdayKey!
+  ): [PlanExercise!]!
+
+  """Returns the full weekly workout plan for the current user."""
+  weeklyPlan: WeeklyPlan!
+
+  """Returns the workout log for a single date."""
+  workoutDay(
+    """Date in YYYY-MM-DD format."""
+    date: String!
+  ): WorkoutDay
+
+  """Returns paginated workout logs for the current user."""
+  workouts(
+    """Maximum number of items to return on a single page."""
+    limit: Int! = 10
+
+    """Page number starting from 1."""
+    page: Int! = 1
+  ): PaginatedWorkoutDays!
+}
+
+"""Data required to register a new GymHelper user."""
+input RegisterInput {
+  """Email address of the new user."""
+  email: String! = ""
+
+  """Display name of the new user."""
+  name: String! = ""
+
+  """Password of the new user."""
+  password: String! = ""
+}
+
+"""Payload used to replace a full plan day."""
+input SavePlanDayInput {
+  """Ordered list of exercises for the selected weekday."""
+  exercises: [PlanExerciseInput!]! = []
+}
+
+"""Payload used to replace a full workout day."""
+input SaveWorkoutDayInput {
+  """Ordered list of exercises for the workout day."""
+  exercises: [WorkoutExerciseInput!]! = []
+}
+
+"""Weekday key used by GymHelper workout plans."""
+enum WeekdayKey {
+  """Friday"""
+  FRI
+
+  """Monday"""
+  MON
+
+  """Saturday"""
+  SAT
+
+  """Sunday"""
+  SUN
+
+  """Thursday"""
+  THU
+
+  """Tuesday"""
+  TUE
+
+  """Wednesday"""
+  WED
+}
+
+"""Full weekly workout plan grouped by weekday."""
+type WeeklyPlan {
+  """Exercises planned for Friday."""
+  fri: [PlanExercise!]!
+
+  """Exercises planned for Monday."""
+  mon: [PlanExercise!]!
+
+  """Exercises planned for Saturday."""
+  sat: [PlanExercise!]!
+
+  """Exercises planned for Sunday."""
+  sun: [PlanExercise!]!
+
+  """Exercises planned for Thursday."""
+  thu: [PlanExercise!]!
+
+  """Exercises planned for Tuesday."""
+  tue: [PlanExercise!]!
+
+  """Exercises planned for Wednesday."""
+  wed: [PlanExercise!]!
+}
+
+"""Workout log for a specific date."""
+type WorkoutDay {
+  """Workout date in YYYY-MM-DD format."""
+  date: String!
+
+  """Exercises saved for the date."""
+  exercises: [WorkoutExercise!]!
+}
+
+"""Exercise recorded inside a workout day."""
+type WorkoutExercise {
+  """Unique exercise identifier."""
+  id: String!
+
+  """Exercise name."""
+  name: String!
+
+  """Sets recorded for the exercise."""
+  sets: [WorkoutSet!]!
+}
+
+"""Exercise entry that can be saved into a workout day."""
+input WorkoutExerciseInput {
+  """Exercise name."""
+  name: String
+
+  """Ordered list of sets for the exercise."""
+  sets: [WorkoutSetInput!]! = []
+}
+
+"""Single set inside a workout exercise."""
+type WorkoutSet {
+  """Unique set identifier."""
+  id: String!
+
+  """Number of repetitions."""
+  reps: Int
+
+  """Weight used in kilograms."""
+  weight: Float
+}
+
+"""Single set that can be saved into a workout exercise."""
+input WorkoutSetInput {
+  """Number of repetitions."""
+  reps: Int
+
+  """Weight used in kilograms."""
+  weight: Float
+}

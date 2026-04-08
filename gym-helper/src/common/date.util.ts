@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function ensureIsoDate(value: string, fieldName = 'date') {
   if (!ISO_DATE_PATTERN.test(value)) {

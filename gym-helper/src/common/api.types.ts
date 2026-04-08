@@ -1,4 +1,5 @@
 export type UserRoleValue = 'user' | 'admin';
+export type WeekdayValue = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
 export type AuthUserResponse = {
   id: string;
@@ -12,6 +13,8 @@ export type PlanExerciseResponse = {
   name: string;
   note: string;
 };
+
+export type WeeklyPlanResponse = Record<WeekdayValue, PlanExerciseResponse[]>;
 
 export type WorkoutSetResponse = {
   id: string;
@@ -60,4 +63,12 @@ export type DashboardSummaryResponse = {
   workoutDays: number;
   avgCalories: number;
   avgSleep: number;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 };

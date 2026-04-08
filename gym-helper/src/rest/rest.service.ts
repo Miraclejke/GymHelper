@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { RestDayResponse } from '../common/api.types';
+import { PaginatedResponse, RestDayResponse } from '../common/api.types';
 import { fromDateOnly, toDateOnly } from '../common/date.util';
+import { buildPaginatedResponse } from '../common/pagination.util';
 import { DashboardEventsService } from '../dashboard/dashboard-events.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -11,17 +12,30 @@ export class RestService {
     private readonly dashboardEvents: DashboardEventsService,
   ) {}
 
-  async list(userId: string): Promise<Record<string, RestDayResponse>> {
-    const days = await this.prisma.restDay.findMany({
-      where: { userId },
-      orderBy: { date: 'asc' },
-    });
+  async list(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<RestDayResponse>> {
+    const skip = (page - 1) * limit;
+    const [total, days] = await Promise.all([
+      this.prisma.restDay.count({
+        where: { userId },
+      }),
+      this.prisma.restDay.findMany({
+        where: { userId },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
 
-    return days.reduce<Record<string, RestDayResponse>>((result, day) => {
-      const mapped = this.mapRestDay(day);
-      result[mapped.date] = mapped;
-      return result;
-    }, {});
+    return buildPaginatedResponse(
+      days.map((day) => this.mapRestDay(day)),
+      page,
+      limit,
+      total,
+    );
   }
 
   async getDay(userId: string, date: string): Promise<RestDayResponse | null> {

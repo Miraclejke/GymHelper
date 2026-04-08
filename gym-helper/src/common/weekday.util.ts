@@ -10,6 +10,16 @@ export type WeekdayKey =
   | 'sat'
   | 'sun';
 
+export const WEEKDAY_ORDER: WeekdayKey[] = [
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+  'sun',
+];
+
 const WEEKDAY_MAP: Record<WeekdayKey, Weekday> = {
   mon: Weekday.MON,
   tue: Weekday.TUE,
@@ -18,6 +28,16 @@ const WEEKDAY_MAP: Record<WeekdayKey, Weekday> = {
   fri: Weekday.FRI,
   sat: Weekday.SAT,
   sun: Weekday.SUN,
+};
+
+const REVERSE_WEEKDAY_MAP: Record<Weekday, WeekdayKey> = {
+  [Weekday.MON]: 'mon',
+  [Weekday.TUE]: 'tue',
+  [Weekday.WED]: 'wed',
+  [Weekday.THU]: 'thu',
+  [Weekday.FRI]: 'fri',
+  [Weekday.SAT]: 'sat',
+  [Weekday.SUN]: 'sun',
 };
 
 export function toWeekday(value: string): Weekday {
@@ -30,4 +50,8 @@ export function toWeekday(value: string): Weekday {
   }
 
   return WEEKDAY_MAP[normalized];
+}
+
+export function fromWeekday(value: Weekday): WeekdayKey {
+  return REVERSE_WEEKDAY_MAP[value];
 }
