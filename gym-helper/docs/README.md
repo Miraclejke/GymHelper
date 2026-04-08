@@ -7,8 +7,14 @@
 - [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)  
   Полное описание проекта, архитектуры и того, как каждая лабораторная работа адаптирована под GymHelper.
 
+- [PROJECT_IMPLEMENTATION.md](./PROJECT_IMPLEMENTATION.md)  
+  Отдельное описание проекта и его реализации по ЛР1-ЛР7: что используется и как это работает.
+
 - [FULL_TEST_GUIDE.md](./FULL_TEST_GUIDE.md)  
   Полный сценарий настройки, проверки, запуска на Render и тестирования из консоли.
+
+- [TEACHER_TEST_PLAN.md](./TEACHER_TEST_PLAN.md)  
+  Готовый сценарий демонстрации проекта перед преподавателем по ЛР1-ЛР7.
 
 - [context/CODEX_ONBOARDING.md](./context/CODEX_ONBOARDING.md)  
   Краткий вход в кодовую базу.
@@ -39,5 +45,6 @@
 1. [../README.md](../README.md)
 2. [PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)
 3. [FULL_TEST_GUIDE.md](./FULL_TEST_GUIDE.md)
-4. [context/CODEX_ONBOARDING.md](./context/CODEX_ONBOARDING.md)
-5. [context/LAB1_LAB7_AUDIT.md](./context/LAB1_LAB7_AUDIT.md)
+4. [TEACHER_TEST_PLAN.md](./TEACHER_TEST_PLAN.md)
+5. [context/CODEX_ONBOARDING.md](./context/CODEX_ONBOARDING.md)
+6. [context/LAB1_LAB7_AUDIT.md](./context/LAB1_LAB7_AUDIT.md)

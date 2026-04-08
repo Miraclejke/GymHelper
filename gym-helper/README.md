@@ -63,7 +63,9 @@ npm run prisma:seed
 ## Документация
 
 - обзор проекта: [docs/PROJECT_DESCRIPTION.md](./docs/PROJECT_DESCRIPTION.md)
+- реализация проекта по лабораторным: [docs/PROJECT_IMPLEMENTATION.md](./docs/PROJECT_IMPLEMENTATION.md)
 - полная настройка и проверка: [docs/FULL_TEST_GUIDE.md](./docs/FULL_TEST_GUIDE.md)
+- сценарий показа преподавателю: [docs/TEACHER_TEST_PLAN.md](./docs/TEACHER_TEST_PLAN.md)
 - аудит ЛР1-ЛР7: [docs/context/LAB1_LAB7_AUDIT.md](./docs/context/LAB1_LAB7_AUDIT.md)
 - onboarding по коду: [docs/context/CODEX_ONBOARDING.md](./docs/context/CODEX_ONBOARDING.md)
 - исходные методички: [docs/source-labs](./docs/source-labs)
