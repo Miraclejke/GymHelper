@@ -468,6 +468,15 @@ a {
   font-size: 14px;
 }
 
+.form-success {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eef9f1;
+  border: 1px solid #cfe8d6;
+  color: #16643a;
+  font-size: 14px;
+}
+
 .center {
   align-items: center;
   justify-content: center;

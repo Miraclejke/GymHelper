@@ -4,9 +4,11 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppShell from './components/layout/AppShell';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import NutritionPage from './pages/NutritionPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PlanPage from './pages/PlanPage';
+import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
 import RestPage from './pages/RestPage';
 import WorkoutPage from './pages/WorkoutPage';
@@ -43,6 +45,14 @@ export default function App() {
           }
         />
         <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/plan"
           element={
             <ProtectedRoute>
@@ -74,6 +84,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <RestPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminUsersPage />
             </ProtectedRoute>
           }
         />

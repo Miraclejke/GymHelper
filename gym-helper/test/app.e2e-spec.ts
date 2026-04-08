@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { randomUUID } from 'node:crypto';
@@ -6,6 +7,7 @@ import request from 'supertest';
 import type { SuperAgentTest } from 'supertest';
 import { AppModule } from './../src/app.module';
 import { configureApp } from './../src/app.setup';
+import { PrismaService } from './../src/prisma/prisma.service';
 
 function getTodayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -20,8 +22,12 @@ function getIsoDateOffset(offset: number) {
 describe('GymHelper API (e2e)', () => {
   let app: INestApplication;
   let agent: SuperAgentTest;
+  let adminCandidateAgent: SuperAgentTest;
+  let prisma: PrismaService;
   let userEmail = '';
-  const userPassword = 'pass1234';
+  let userPassword = 'pass1234';
+  let adminEmail = '';
+  let adminUserId = '';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -32,7 +38,9 @@ describe('GymHelper API (e2e)', () => {
     configureApp(app as NestExpressApplication);
     await app.init();
 
+    prisma = moduleFixture.get(PrismaService);
     agent = request.agent(app.getHttpServer());
+    adminCandidateAgent = request.agent(app.getHttpServer());
   });
 
   afterAll(async () => {
@@ -65,6 +73,7 @@ describe('GymHelper API (e2e)', () => {
     const jsonResponse = await agent.get('/api/docs-json').expect(200);
     expect(jsonResponse.body.info.title).toBe('GymHelper API');
     expect(jsonResponse.body.paths['/api/workouts']).toBeDefined();
+    expect(jsonResponse.body.paths['/api/admin/users']).toBeDefined();
   });
 
   it('validates request payloads', async () => {
@@ -104,6 +113,121 @@ describe('GymHelper API (e2e)', () => {
 
     const meResponse = await agent.get('/api/auth/me').expect(200);
     expect(meResponse.body.email).toBe(userEmail);
+  });
+
+  it('updates the current user profile', async () => {
+    const response = await agent
+      .patch('/api/auth/profile')
+      .send({
+        name: 'Updated API User',
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      email: userEmail,
+      name: 'Updated API User',
+      role: 'user',
+    });
+
+    const meResponse = await agent.get('/api/auth/me').expect(200);
+    expect(meResponse.body.name).toBe('Updated API User');
+  });
+
+  it('changes the current user password and invalidates the old one', async () => {
+    const nextPassword = 'pass5678';
+
+    await agent
+      .patch('/api/auth/password')
+      .send({
+        currentPassword: userPassword,
+        newPassword: nextPassword,
+      })
+      .expect(204);
+
+    await agent.post('/api/auth/logout').expect(204);
+
+    await agent
+      .post('/api/auth/login')
+      .send({
+        email: userEmail,
+        password: userPassword,
+      })
+      .expect(401);
+
+    userPassword = nextPassword;
+
+    const loginResponse = await agent
+      .post('/api/auth/login')
+      .send({
+        email: userEmail,
+        password: userPassword,
+      })
+      .expect(200);
+
+    expect(loginResponse.body).toMatchObject({
+      email: userEmail,
+      role: 'user',
+    });
+  });
+
+  it('forbids a regular user from admin routes', async () => {
+    await agent.get('/api/admin/users').expect(403);
+  });
+
+  it('allows an admin to list users and change roles', async () => {
+    adminEmail = `admin-${randomUUID()}@gymhelper.local`;
+
+    const registerResponse = await adminCandidateAgent
+      .post('/api/auth/register')
+      .send({
+        name: 'Admin Candidate',
+        email: adminEmail,
+        password: 'admin5678',
+      })
+      .expect(201);
+
+    adminUserId = registerResponse.body.id;
+
+    await prisma.user.update({
+      where: { id: adminUserId },
+      data: { role: UserRole.ADMIN },
+    });
+
+    const listResponse = await adminCandidateAgent.get('/api/admin/users').expect(200);
+
+    expect(Array.isArray(listResponse.body)).toBe(true);
+    expect(
+      listResponse.body.some((entry: { email: string }) => entry.email === userEmail),
+    ).toBe(true);
+
+    const updateResponse = await adminCandidateAgent
+      .patch(`/api/admin/users/${registerResponse.body.id}/role`)
+      .send({
+        role: 'user',
+      })
+      .expect(200);
+
+    expect(updateResponse.body).toMatchObject({
+      id: registerResponse.body.id,
+      email: adminEmail,
+      role: 'user',
+    });
+
+    await prisma.user.update({
+      where: { id: adminUserId },
+      data: { role: UserRole.ADMIN },
+    });
+
+    const secondListResponse = await adminCandidateAgent
+      .get('/api/admin/users')
+      .expect(200);
+
+    expect(
+      secondListResponse.body.some(
+        (entry: { email: string; role: string }) =>
+          entry.email === adminEmail && entry.role === 'admin',
+      ),
+    ).toBe(true);
   });
 
   it('returns timing and HTTP cache headers for suggestion endpoints', async () => {

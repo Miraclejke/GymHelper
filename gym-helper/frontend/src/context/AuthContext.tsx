@@ -7,6 +7,10 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi } from '../api/authApi';
+import type {
+  ChangePasswordPayload,
+  UpdateProfilePayload,
+} from '../api/types';
 import type { AuthUser } from '../store/types';
 
 type LoginPayload = {
@@ -26,6 +30,9 @@ type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  changePassword: (payload: ChangePasswordPayload) => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,6 +40,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshUser = async () => {
+    const nextUser = await authApi.getCurrentUser();
+    setUser(nextUser);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await authApi.logout();
         setUser(null);
       },
+      updateProfile: async (payload) => {
+        const nextUser = await authApi.updateProfile(payload);
+        setUser(nextUser);
+      },
+      changePassword: async (payload) => {
+        await authApi.changePassword(payload);
+      },
+      refreshUser,
     }),
     [isLoading, user]
   );

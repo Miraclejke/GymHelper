@@ -1,6 +1,6 @@
 require('dotenv/config');
 
-const { createHash } = require('node:crypto');
+const { randomBytes, scryptSync } = require('node:crypto');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient, UserRole, Weekday } = require('@prisma/client');
 
@@ -28,8 +28,11 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 const toDateOnly = (value) => new Date(`${value}T00:00:00.000Z`);
-const hashPassword = (value) =>
-  createHash('sha256').update(value).digest('hex');
+const hashPassword = (value) => {
+  const salt = randomBytes(16).toString('hex');
+  const key = scryptSync(value, salt, 64).toString('hex');
+  return `scrypt$${salt}$${key}`;
+};
 
 async function main() {
   const admin = await prisma.user.upsert({

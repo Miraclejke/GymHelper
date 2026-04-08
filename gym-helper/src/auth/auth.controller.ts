@@ -3,15 +3,18 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiExtraModels,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -20,11 +23,15 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { CurrentUserId } from './current-user-id.decorator';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { AuthService } from './auth.service';
 import { AuthUserResponseDto } from './dto/auth-user.response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { SessionAuthGuard } from './session-auth.guard';
 
 @Controller('api/auth')
 @ApiTags('auth')
@@ -72,6 +79,35 @@ export class AuthController {
     request.session.userId = user.id;
 
     return this.authService.toAuthUser(user);
+  }
+
+  @Patch('profile')
+  @UseGuards(SessionAuthGuard)
+  @ApiOperation({ summary: 'Update the current user profile.' })
+  @ApiCookieAuth('session')
+  @ApiOkResponse({ type: AuthUserResponseDto })
+  @ApiUnauthorizedResponse({ type: ErrorResponseDto })
+  updateProfile(@CurrentUserId() userId: string, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(userId, dto.name);
+  }
+
+  @Patch('password')
+  @HttpCode(204)
+  @UseGuards(SessionAuthGuard)
+  @ApiOperation({ summary: 'Change the current user password.' })
+  @ApiCookieAuth('session')
+  @ApiNoContentResponse({ description: 'Password updated successfully.' })
+  @ApiUnauthorizedResponse({ type: ErrorResponseDto })
+  @ApiForbiddenResponse({ type: ErrorResponseDto })
+  async changePassword(
+    @CurrentUserId() userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   @Post('logout')

@@ -26,6 +26,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <NavLink to="/" end className="nav-link">
                 Дашборд
               </NavLink>
+              <NavLink to="/profile" className="nav-link">
+                Профиль
+              </NavLink>
               <NavLink to="/plan" className="nav-link">
                 План
               </NavLink>
@@ -38,6 +41,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <NavLink to={`/rest/${today}`} className="nav-link">
                 Отдых
               </NavLink>
+              {user.role === 'admin' && (
+                <NavLink to="/admin/users" className="nav-link">
+                  Админ
+                </NavLink>
+              )}
             </nav>
 
             <div className="session-panel">

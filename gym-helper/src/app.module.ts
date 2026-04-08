@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -20,6 +21,7 @@ import { WorkoutModule } from './workout/workout.module';
     }),
     PrismaModule,
     AppGraphqlModule,
+    AdminModule,
     AuthModule,
     DashboardModule,
     PlanModule,

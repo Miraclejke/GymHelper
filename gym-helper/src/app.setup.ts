@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import session from 'express-session';
 import { engine } from 'express-handlebars';
 import { join } from 'path';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NutritionModule } from './nutrition/nutrition.module';
@@ -64,6 +65,7 @@ export function configureApp(app: NestExpressApplication) {
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
     include: [
+      AdminModule,
       AuthModule,
       PlanModule,
       WorkoutModule,

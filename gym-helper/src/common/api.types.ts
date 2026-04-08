@@ -8,6 +8,10 @@ export type AuthUserResponse = {
   role: UserRoleValue;
 };
 
+export type AdminUserResponse = AuthUserResponse & {
+  createdAt: string;
+};
+
 export type PlanExerciseResponse = {
   id: string;
   name: string;
