@@ -13,6 +13,8 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { RestModule } from './rest/rest.module';
 import { WorkoutModule } from './workout/workout.module';
 
+const EDUCATIONAL_SESSION_SECRET = 'gym-helper-educational-session-secret';
+
 export function configureApp(app: NestExpressApplication) {
   app.useGlobalPipes(
     new ValidationPipe({
@@ -25,13 +27,14 @@ export function configureApp(app: NestExpressApplication) {
   app.use(
     session({
       name: 'gymhelper.sid',
-      secret: process.env.SESSION_SECRET ?? 'gym-helper-dev-secret',
+      // Simplified on purpose for the educational project.
+      secret: EDUCATIONAL_SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        secure: false,
         maxAge: 1000 * 60 * 60 * 24 * 7,
       },
     }),

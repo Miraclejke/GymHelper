@@ -9,16 +9,18 @@ Backend-часть учебного проекта `GymHelper`, объединя
 
 ## Быстрый статус
 
-ЛР1-ЛР6 в проекте реализованы.
+ЛР1-ЛР7 в проекте реализованы.
 
 Важно:
 - ЛР3 и ЛР6 адаптированы под реальный проект, а не повторяют методичку буквально.
 - В ЛР6 файловая часть сознательно исключена: в домене проекта нет необходимости в загрузке файлов.
 
 Подробности:
-- аудит выполнения: `LAB1_LAB6_AUDIT.md`
-- onboarding для нового чата: `CODEX_ONBOARDING.md`
-- исторические отчеты: `REPORT_LR1_LR3.md`, `REPORT_LR4.md`, `REPORT_LR5.md`, `REPORT_LR6.md`
+- карта документации: `docs/README.md`
+- аудит выполнения: `docs/context/LAB1_LAB7_AUDIT.md`
+- onboarding для нового чата: `docs/context/CODEX_ONBOARDING.md`
+- исторические отчеты: `docs/reports/REPORT_LR1_LR3.md`, `docs/reports/REPORT_LR4.md`, `docs/reports/REPORT_LR5.md`, `docs/reports/REPORT_LR6.md`, `docs/reports/REPORT_LR7.md`
+- план ЛР7: `docs/plans/LAB7_IMPLEMENTATION_PLAN.md`
 
 ## Стек
 
@@ -58,7 +60,7 @@ Frontend собирается из `frontend/` автоматически чер
 - `views/` - Handlebars-шаблоны для ЛР1
 - `prisma/` - схема, миграции, seed
 - `test/` - e2e-тесты
-- `REPORT_LR*.md` - отчеты по лабораторным
+- `docs/` - вся проектная документация, планы, отчеты и исходные методички
 
 ## Точки входа
 
