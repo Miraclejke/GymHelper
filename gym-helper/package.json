@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run build:frontend && npm run build:backend",
     "build:backend": "npm run prisma:generate && nest build",
-    "build:frontend": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "build:frontend": "cd frontend && npm ci --include=dev && npm run build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",

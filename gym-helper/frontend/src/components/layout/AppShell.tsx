@@ -16,7 +16,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <div className="brand-mark">GH</div>
           <div>
             <div className="brand-title">GymHelper</div>
-            <div className="brand-subtitle">Учебный full-stack проект на React и NestJS</div>
           </div>
         </div>
 

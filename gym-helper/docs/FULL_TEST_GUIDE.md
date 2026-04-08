@@ -411,97 +411,282 @@ curl.exe -i ^
 
 ## 9. Полная настройка Render
 
-## 9.1. Подготовка репозитория
+Ниже описан самый простой и понятный вариант деплоя: один `Web Service` на Render, который раздает и backend, и собранный frontend, плюс отдельная база `PostgreSQL` в Render.
 
-Перед деплоем локально проверить:
+## 9.1. Что должно быть готово до деплоя
+
+Перед публикацией проекта локально проверить:
 
 ```bash
+npm install
+npm run prisma:generate
 npm run lint
 npm test -- --runInBand
 npm run test:e2e -- --runInBand
 npm run build
 ```
 
-Затем отправить актуальный код в `GitHub`.
+После этого нужно:
+- убедиться, что код отправлен в `GitHub`;
+- убедиться, что в репозитории есть актуальный файл `.env.example`;
+- не загружать в репозиторий реальный `.env` с настоящими паролями.
 
-## 9.2. База данных
+## 9.2. Сначала создать PostgreSQL на Render
 
-На `Render` можно:
-- создать PostgreSQL в самом Render;
-- либо использовать внешний PostgreSQL.
+В панели Render:
 
-Нужна строка подключения `DATABASE_URL`.
+1. Нажать `New`.
+2. Выбрать `PostgreSQL`.
+3. Заполнить базовые поля:
+   - `Name`: например `gym-helper-db`;
+   - `Database`: например `gymhelper`;
+   - `User`: например `gymhelper_user`;
+   - `Region`: лучше ту же, что и у web service.
+4. Создать базу.
 
-## 9.3. Создание Web Service
+После создания базы Render покажет несколько строк подключения. Для проекта нужна именно:
 
-В панели `Render`:
-
-1. Создать новый `Web Service`.
-2. Подключить GitHub-репозиторий.
-3. Выбрать ветку деплоя.
-
-Рекомендуемые параметры:
-
-- Runtime: `Node`
-- Build Command:
-
-```bash
-npm install && npm run build
+```text
+External Database URL
 ```
 
-- Start Command:
+Именно это значение нужно вставить в переменную окружения `DATABASE_URL`.
+
+## 9.3. Какой репозиторий и какую папку выбирать
+
+Если в GitHub у тебя опубликован только проект `gym-helper`, то:
+
+- `Root Directory` оставь пустым.
+
+Если в GitHub опубликован весь общий репозиторий `lastweb`, а проект лежит внутри:
+
+- `Root Directory` укажи так:
+
+```text
+GymHelper-backend/gym-helper
+```
+
+Это очень важный момент. Если `Root Directory` указан неправильно, Render не найдет `package.json` и сборка сразу упадет.
+
+## 9.4. Создание Web Service
+
+В панели Render:
+
+1. Нажать `New`.
+2. Выбрать `Web Service`.
+3. Подключить GitHub.
+4. Выбрать нужный репозиторий.
+5. Выбрать ветку, обычно `main`.
+
+Дальше заполнить настройки сервиса так:
+
+- `Name`: например `gym-helper`
+- `Region`: та же, что у PostgreSQL
+- `Runtime`: `Node`
+- `Root Directory`: см. раздел выше
+- `Build Command`:
+
+```bash
+npm install --include=dev && npm run build
+```
+
+- `Start Command`:
 
 ```bash
 npm run prisma:migrate:render && npm run start:prod
 ```
 
+- `Auto-Deploy`: `Yes`
+
 Почему именно так:
-- `build` собирает frontend и backend;
-- `start:prod` запускает уже собранный backend;
-- `prisma:migrate:render` применяет миграции перед запуском сервиса.
+- `npm install --include=dev` ставит и обычные, и dev-зависимости, которые нужны для сборки TypeScript и frontend;
+- `npm run build` собирает backend и frontend;
+- `npm run prisma:migrate:render` применяет Prisma migrations в production;
+- `npm run start:prod` запускает уже собранный NestJS-сервер, который раздает и API, и frontend.
 
-## 9.4. Переменные среды на Render
+## 9.5. Какие переменные среды добавить
 
-Добавить:
+В `Environment Variables` на Render нужно добавить следующие значения.
+
+### `DATABASE_URL`
+
+Сюда вставить `External Database URL` из созданной базы Render.
+
+Пример вида:
 
 ```env
-DATABASE_URL=<ваша строка подключения>
-SESSION_SECRET=<любой длинный секрет>
-CORS_ORIGIN=https://<your-render-domain>.onrender.com
+DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+```
+
+### `SESSION_SECRET`
+
+Сюда вставить длинную случайную строку.
+
+Пример:
+
+```env
+SESSION_SECRET=gym-helper-render-session-secret-very-long-string-123456
+```
+
+Это секрет для сессий и cookie. Лучше не использовать слишком короткое значение.
+
+### `CORS_ORIGIN`
+
+Сюда вставить адрес самого Render-сервиса после деплоя.
+
+Пример:
+
+```env
+CORS_ORIGIN=https://gym-helper.onrender.com
+```
+
+Для этого проекта frontend и backend раздаются одним и тем же сервисом, поэтому здесь должен быть домен этого же Render-приложения.
+
+### `NODE_ENV`
+
+Указать:
+
+```env
 NODE_ENV=production
 ```
 
-Если frontend и backend раздаются одним и тем же сервисом, `CORS_ORIGIN` можно задать доменом этого же сервиса.
+## 9.6. Полный готовый набор env переменных для Render
 
-## 9.5. Первый seed на Render
+В итоге в Render должно получиться примерно так:
 
-`Seed` нельзя ставить в `Start Command`, потому что он:
-- каждый раз обновляет демо-админа;
-- очищает и пересоздает его demo-данные.
+```env
+DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
+SESSION_SECRET=<длинный_секрет>
+CORS_ORIGIN=https://<your-service>.onrender.com
+NODE_ENV=production
+```
 
-Поэтому seed нужно запускать отдельно, один раз после первого успешного деплоя:
+Где что брать:
+- `DATABASE_URL` взять из `External Database URL` базы Render;
+- `SESSION_SECRET` придумать самостоятельно;
+- `CORS_ORIGIN` взять из домена web service;
+- `NODE_ENV` задать вручную как `production`.
+
+## 9.7. Что нажимать после заполнения
+
+После того как:
+- выбран репозиторий;
+- указан `Root Directory`;
+- прописаны команды;
+- добавлены env переменные;
+
+можно нажимать `Create Web Service`.
+
+Дальше Render начнет:
+- скачивать репозиторий;
+- устанавливать зависимости;
+- собирать проект;
+- применять миграции;
+- запускать сервер.
+
+Если что-то пошло не так, нужно смотреть:
+- `Build Logs`;
+- `Runtime Logs`.
+
+## 9.8. Как выполнить первый seed на Render
+
+`Seed` не нужно добавлять в `Start Command`, потому что тогда он будет запускаться при каждом старте сервиса.
+
+Для учебного проекта это плохо, потому что seed:
+- перезаписывает демо-админа;
+- может обновить демо-данные в базе.
+
+Правильный вариант:
+
+1. Дождаться первого успешного деплоя.
+2. Открыть shell/console Render для этого сервиса.
+3. Выполнить:
 
 ```bash
 npm run prisma:seed
 ```
 
-Это можно сделать через shell/console Render или любой другой доступный способ запуска команды в окружении сервиса.
+Обычно это нужно сделать один раз, сразу после первого деплоя.
 
-## 9.6. Что проверить после деплоя
+## 9.9. Что проверить после деплоя
 
-Открыть:
+Открыть в браузере:
 
-- `https://<your-render-domain>.onrender.com/`
-- `https://<your-render-domain>.onrender.com/lab1`
-- `https://<your-render-domain>.onrender.com/api/docs`
-- `https://<your-render-domain>.onrender.com/graphql`
+- `https://<your-service>.onrender.com/`
+- `https://<your-service>.onrender.com/lab1`
+- `https://<your-service>.onrender.com/api/docs`
+- `https://<your-service>.onrender.com/graphql`
+- `https://<your-service>.onrender.com/profile`
+- `https://<your-service>.onrender.com/admin/users`
 
-Проверить:
-- работает SPA;
-- работают прямые маршруты `/profile`, `/admin/users`;
-- работает Swagger;
-- работает GraphQL;
-- можно войти под `admin@gymhelper.local / admin123`.
+После этого проверить:
+- открывается главная SPA-страница;
+- прямые переходы по `/profile` и `/admin/users` не дают `404`;
+- Swagger открывается;
+- GraphQL страница открывается;
+- можно войти под `admin@gymhelper.local / admin123`;
+- после логина работает dashboard;
+- после изменений тренировок, питания и отдыха обновляется summary.
+
+## 9.10. Самый простой шаблон настроек Render
+
+Если тебе нужно просто быстро свериться, то ориентируйся на этот шаблон:
+
+- `Type`: `Web Service`
+- `Runtime`: `Node`
+- `Root Directory`: `GymHelper-backend/gym-helper` или пусто, если это и есть корень репозитория
+- `Build Command`: `npm install --include=dev && npm run build`
+- `Start Command`: `npm run prisma:migrate:render && npm run start:prod`
+- `DATABASE_URL`: `External Database URL` из PostgreSQL Render
+- `SESSION_SECRET`: длинный случайный секрет
+- `CORS_ORIGIN`: `https://<your-service>.onrender.com`
+- `NODE_ENV`: `production`
+
+## 9.11. Частые ошибки на Render
+
+### Ошибка 1. Render не находит `package.json`
+
+Причина:
+- неправильно указан `Root Directory`.
+
+Что делать:
+- проверить, где именно в репозитории лежит проект;
+- если нужен вложенный путь, указать `GymHelper-backend/gym-helper`.
+
+### Ошибка 2. Prisma не может подключиться к базе
+
+Причина:
+- неверный `DATABASE_URL`;
+- скопирована не та ссылка;
+- забыта env переменная.
+
+Что делать:
+- открыть PostgreSQL в Render;
+- заново скопировать `External Database URL`;
+- вставить его в `DATABASE_URL`.
+
+### Ошибка 3. После деплоя приложение открылось, но логин не работает
+
+Причина:
+- неверный `CORS_ORIGIN`;
+- не выполнен seed;
+- не применились миграции.
+
+Что делать:
+- проверить `CORS_ORIGIN`;
+- проверить, что `Start Command` содержит `npm run prisma:migrate:render && npm run start:prod`;
+- вручную выполнить `npm run prisma:seed`.
+
+### Ошибка 4. Открывается `/`, но `/profile` или `/admin/users` дают `404`
+
+Причина:
+- запущена старая версия проекта;
+- деплой не подтянул актуальные изменения.
+
+Что делать:
+- проверить, что в GitHub отправлен последний код;
+- выполнить новый deploy;
+- снова открыть прямые маршруты.
 
 ## 10. Что считается успешной сдачей
 
