@@ -13,7 +13,7 @@ const withRenderSsl = (connectionString: string) => {
   }
 
   const separator = connectionString.includes('?') ? '&' : '?';
-  return `${connectionString}${separator}sslmode=verify-full`;
+  return `${connectionString}${separator}sslmode=require`;
 };
 
 @Injectable()

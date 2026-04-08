@@ -19,7 +19,7 @@ const withRenderSsl = (value) => {
   }
 
   const separator = value.includes('?') ? '&' : '?';
-  return `${value}${separator}sslmode=verify-full`;
+  return `${value}${separator}sslmode=require`;
 };
 
 const adapter = new PrismaPg({

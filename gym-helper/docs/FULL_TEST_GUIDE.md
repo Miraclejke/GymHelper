@@ -28,7 +28,7 @@
 Минимальный набор:
 
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/gymhelper?sslmode=verify-full
+DATABASE_URL=postgresql://user:password@host:5432/gymhelper?sslmode=require
 SESSION_SECRET=gym-helper-educational-session-secret
 CORS_ORIGIN=http://localhost:5173
 ```
