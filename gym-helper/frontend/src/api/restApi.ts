@@ -1,47 +1,19 @@
 import type { RestDay } from '../store/types';
-import { getCurrentUserData, updateCurrentUserData } from './mockDb';
-
-const normalizeRestDay = (date: string, restDay: RestDay): RestDay | null => {
-  const normalized: RestDay = {
-    ...restDay,
-    date,
-    note: restDay.note?.trim(),
-  };
-
-  if (normalized.sleepHours === undefined && !normalized.note && normalized.isRest === false) {
-    return null;
-  }
-
-  return normalized;
-};
+import { requestJson } from './http';
 
 export const restApi = {
   async list(): Promise<Record<string, RestDay>> {
-    return getCurrentUserData().rest;
+    return requestJson<Record<string, RestDay>>('/api/rest');
   },
 
   async getDay(date: string): Promise<RestDay | null> {
-    return getCurrentUserData().rest[date] ?? null;
+    return requestJson<RestDay | null>(`/api/rest/${date}`);
   },
 
   async saveDay(date: string, restDay: RestDay): Promise<RestDay | null> {
-    const normalized = normalizeRestDay(date, restDay);
-
-    const nextData = updateCurrentUserData((currentData) => {
-      const nextRest = { ...currentData.rest };
-
-      if (!normalized) {
-        delete nextRest[date];
-      } else {
-        nextRest[date] = normalized;
-      }
-
-      return {
-        ...currentData,
-        rest: nextRest,
-      };
+    return requestJson<RestDay | null>(`/api/rest/${date}`, {
+      method: 'PUT',
+      body: JSON.stringify(restDay),
     });
-
-    return nextData.rest[date] ?? null;
   },
 };

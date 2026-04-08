@@ -1,49 +1,23 @@
 import type { WorkoutDay, WorkoutExercise } from '../store/types';
-import { getCurrentUserData, updateCurrentUserData } from './mockDb';
-
-const normalizeWorkoutExercises = (items: WorkoutExercise[]) =>
-  items
-    .map((item) => ({
-      ...item,
-      name: item.name.trim(),
-      sets: item.sets.filter((setItem) => setItem.weight !== undefined || setItem.reps !== undefined),
-    }))
-    .filter((item) => item.name || item.sets.length > 0);
+import { requestJson } from './http';
 
 export const workoutApi = {
   async getSuggestions(): Promise<string[]> {
-    return getCurrentUserData().suggestions;
+    return requestJson<string[]>('/api/workouts/suggestions');
   },
 
   async list(): Promise<Record<string, WorkoutDay>> {
-    return getCurrentUserData().workouts;
+    return requestJson<Record<string, WorkoutDay>>('/api/workouts');
   },
 
   async getDay(date: string): Promise<WorkoutDay | null> {
-    return getCurrentUserData().workouts[date] ?? null;
+    return requestJson<WorkoutDay | null>(`/api/workouts/${date}`);
   },
 
   async saveDay(date: string, exercises: WorkoutExercise[]): Promise<WorkoutDay | null> {
-    const normalized = normalizeWorkoutExercises(exercises);
-
-    const nextData = updateCurrentUserData((currentData) => {
-      const nextWorkouts = { ...currentData.workouts };
-
-      if (normalized.length === 0) {
-        delete nextWorkouts[date];
-      } else {
-        nextWorkouts[date] = {
-          date,
-          exercises: normalized,
-        };
-      }
-
-      return {
-        ...currentData,
-        workouts: nextWorkouts,
-      };
+    return requestJson<WorkoutDay | null>(`/api/workouts/${date}`, {
+      method: 'PUT',
+      body: JSON.stringify({ exercises }),
     });
-
-    return nextData.workouts[date] ?? null;
   },
 };

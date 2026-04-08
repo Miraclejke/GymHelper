@@ -1,48 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { nutritionApi } from '../api/nutritionApi';
-import { restApi } from '../api/restApi';
-import { workoutApi } from '../api/workoutApi';
+import { dashboardApi, type DashboardSummary } from '../api/dashboardApi';
 import StatusPanel from '../components/ui/StatusPanel';
 import Button from '../components/ui/Button';
-import type { NutritionDay, RestDay, WorkoutDay } from '../store/types';
 import { getTodayISO, getWeekdayKey, WEEK_DAYS } from '../utils/date';
 
-const DAYS_RANGE = 14;
-
-type DashboardData = {
-  workouts: Record<string, WorkoutDay>;
-  nutrition: Record<string, NutritionDay>;
-  rest: Record<string, RestDay>;
+const EMPTY_SUMMARY: DashboardSummary = {
+  workoutDays: 0,
+  avgCalories: 0,
+  avgSleep: 0,
 };
-
-function getPastDates(count: number) {
-  const dates: string[] = [];
-
-  for (let index = 0; index < count; index += 1) {
-    const date = new Date();
-    date.setDate(date.getDate() - index);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    dates.push(`${year}-${month}-${day}`);
-  }
-
-  return dates;
-}
 
 export default function DashboardPage() {
   const today = getTodayISO();
   const dayKey = getWeekdayKey(new Date());
   const dayLabel = WEEK_DAYS.find((day) => day.key === dayKey)?.label ?? '';
 
+  const [requestId, setRequestId] = useState(0);
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
   const [error, setError] = useState('');
-  const [data, setData] = useState<DashboardData>({
-    workouts: {},
-    nutrition: {},
-    rest: {},
-  });
+  const [liveMessage, setLiveMessage] = useState('');
+  const [summary, setSummary] = useState<DashboardSummary>(EMPTY_SUMMARY);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,24 +30,24 @@ export default function DashboardPage() {
       setError('');
 
       try {
-        const [workouts, nutrition, rest] = await Promise.all([
-          workoutApi.list(),
-          nutritionApi.list(),
-          restApi.list(),
-        ]);
+        const nextSummary = await dashboardApi.getSummary();
 
         if (!isMounted) {
           return;
         }
 
-        setData({ workouts, nutrition, rest });
+        setSummary(nextSummary);
         setStatus('ready');
       } catch (loadError) {
         if (!isMounted) {
           return;
         }
 
-        setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить дашборд.');
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : 'Не удалось загрузить дашборд.'
+        );
         setStatus('error');
       }
     };
@@ -79,45 +57,30 @@ export default function DashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [requestId]);
 
-  const stats = useMemo(() => {
-    const dates = getPastDates(DAYS_RANGE);
-    let workoutDays = 0;
-    let caloriesSum = 0;
-    let caloriesDays = 0;
-    let sleepSum = 0;
-    let sleepDays = 0;
+  useEffect(() => {
+    const eventSource = new EventSource('/api/dashboard/stream');
 
-    dates.forEach((date) => {
-      if (data.workouts[date]?.exercises.length) {
-        workoutDays += 1;
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { message?: string };
+        setLiveMessage(payload.message ?? 'Данные обновлены.');
+      } catch {
+        setLiveMessage('Данные обновлены.');
       }
 
-      const meals = data.nutrition[date]?.meals ?? [];
-      const dayCalories = meals.reduce(
-        (total, meal) => (meal.calories !== undefined ? total + meal.calories : total),
-        0
-      );
-
-      if (meals.some((meal) => meal.calories !== undefined)) {
-        caloriesSum += dayCalories;
-        caloriesDays += 1;
-      }
-
-      const sleepHours = data.rest[date]?.sleepHours;
-      if (sleepHours !== undefined) {
-        sleepSum += sleepHours;
-        sleepDays += 1;
-      }
-    });
-
-    return {
-      workoutDays,
-      avgCalories: caloriesDays ? Math.round(caloriesSum / caloriesDays) : 0,
-      avgSleep: sleepDays ? Math.round((sleepSum / sleepDays) * 10) / 10 : 0,
+      setRequestId((currentValue) => currentValue + 1);
     };
-  }, [data]);
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   return (
     <div className="page">
@@ -127,24 +90,37 @@ export default function DashboardPage() {
           <p className="muted">
             {today} {dayLabel}
           </p>
+          {liveMessage && <p className="muted">{liveMessage}</p>}
         </div>
       </section>
 
       {status === 'loading' && (
-        <StatusPanel title="Загружаем данные" description="Считаем статистику и подтягиваем записи." variant="loading" />
+        <StatusPanel
+          title="Загружаем данные"
+          description="Считаем статистику и подтягиваем записи."
+          variant="loading"
+        />
       )}
 
       {status === 'error' && (
-        <StatusPanel title="Не удалось загрузить дашборд" description={error} variant="error" />
+        <StatusPanel
+          title="Не удалось загрузить дашборд"
+          description={error}
+          variant="error"
+        />
       )}
 
       {status === 'ready' && (
         <section className="grid grid-3">
           <div className="simple-card">
             <div className="simple-title">За 14 дней</div>
-            <div className="muted">Тренировок: {stats.workoutDays}</div>
-            <div className="muted">Калорий в среднем: {stats.avgCalories || '—'}</div>
-            <div className="muted">Сон в среднем: {stats.avgSleep || '—'} ч</div>
+            <div className="muted">Тренировок: {summary.workoutDays}</div>
+            <div className="muted">
+              Калорий в среднем: {summary.avgCalories || '—'}
+            </div>
+            <div className="muted">
+              Сон в среднем: {summary.avgSleep || '—'} ч
+            </div>
           </div>
           <div className="simple-card">
             <div className="simple-title">Тренировка</div>

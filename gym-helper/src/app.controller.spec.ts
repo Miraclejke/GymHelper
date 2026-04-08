@@ -14,9 +14,19 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  it('returns the lab1 home view model', () => {
+    const result = appController.renderLabHome('guest');
+
+    expect(result).toHaveProperty('title');
+    expect(result).toHaveProperty('cards');
+    expect(Array.isArray(result.cards)).toBe(true);
+  });
+
+  it('returns the lab1 exercises view model', () => {
+    const result = appController.renderLabExercises('user');
+
+    expect(result).toHaveProperty('title');
+    expect(result).toHaveProperty('cards');
+    expect(Array.isArray(result.cards)).toBe(true);
   });
 });
