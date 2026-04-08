@@ -10,7 +10,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "npm run build:frontend && npm run build:backend",
-    "build:backend": "npm run prisma:generate && nest build",
+    "build:backend": "npm run prisma:generate && tsc -p tsconfig.build.json",
     "build:frontend": "cd frontend && npm ci --include=dev && npm run build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prisma:generate": "prisma generate",

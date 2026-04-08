@@ -501,6 +501,7 @@ npm run prisma:migrate:render && npm run start:prod
 Почему именно так:
 - `npm install --include=dev` ставит и обычные, и dev-зависимости, которые нужны для сборки TypeScript и frontend;
 - `npm run build` собирает backend и frontend;
+- backend собирается через `tsc`, поэтому деплой не зависит от `nest` CLI в окружении Render;
 - `npm run prisma:migrate:render` применяет Prisma migrations в production;
 - `npm run start:prod` запускает уже собранный NestJS-сервер, который раздает и API, и frontend.
 
@@ -634,7 +635,7 @@ npm run prisma:seed
 
 - `Type`: `Web Service`
 - `Runtime`: `Node`
-- `Root Directory`: `GymHelper-backend/gym-helper` или пусто, если это и есть корень репозитория
+- `Root Directory`: пусто, если сам репозиторий в GitHub уже начинается с `gym-helper`
 - `Build Command`: `npm install --include=dev && npm run build`
 - `Start Command`: `npm run prisma:migrate:render && npm run start:prod`
 - `DATABASE_URL`: `External Database URL` из PostgreSQL Render
